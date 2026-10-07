@@ -11,6 +11,7 @@ The foundation is complete. The interface shows the planned evaluation loop, whi
 - [Build brief](./docs/build-brief.md)
 - [Build log](./docs/build-log.md)
 - [Cloudinary setup](./docs/cloudinary-setup.md)
+- [Evaluation dataset](./docs/evaluation-dataset.md)
 
 ## Stack
 

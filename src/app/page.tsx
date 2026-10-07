@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { productImagesV1Summary } from "@/data/product-images-v1";
 
 const workflow = [
   {
@@ -58,7 +59,7 @@ export default function Home() {
             </p>
           </div>
         </div>
-        <Badge variant="secondary">Foundation · in progress</Badge>
+        <Badge variant="secondary">Dataset ready · Cloudinary pending</Badge>
       </header>
 
       <section className="grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
@@ -77,7 +78,7 @@ export default function Home() {
             </p>
           </div>
           <Button className="w-fit" disabled>
-            Configure first experiment
+            Connect Cloudinary to continue
             <ArrowRightIcon data-icon="inline-end" />
           </Button>
         </div>
@@ -90,7 +91,17 @@ export default function Home() {
           <CardContent className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-4 text-sm">
               <span className="text-muted-foreground">Dataset</span>
-              <span className="font-medium">50 planned cases</span>
+              <span className="font-medium">
+                {productImagesV1Summary.caseCount} validated cases
+              </span>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between gap-4 text-sm">
+              <span className="text-muted-foreground">Coverage</span>
+              <span className="font-medium">
+                {productImagesV1Summary.productCount} products ×{" "}
+                {productImagesV1Summary.promptFamilyCount} prompts
+              </span>
             </div>
             <Separator />
             <div className="flex items-center justify-between gap-4 text-sm">

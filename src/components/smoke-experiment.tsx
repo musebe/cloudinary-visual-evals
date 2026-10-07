@@ -435,7 +435,7 @@ export function SmokeExperiment({ caseId, enabled, demoAvailable = false }: Smok
           <CardTitle><h2>{readOnlyDemo ? "See a real comparison" : "One-case smoke test"}</h2></CardTitle>
           <CardDescription>
             {readOnlyDemo
-              ? "Explore a recorded Cloudinary experiment: two generated images, their analysis, and the policy decisions. This fixed sample is separate from the selected dataset case above."
+              ? "Explore a recorded Cloudinary experiment: two generated images, their analysis, and the policy decisions. This fixed sample is independent of the dataset case you inspect."
               : <>Next run: {caseId}. Compare the committed prompt with a text-preservation candidate using the same model.</>}
           </CardDescription>
         </CardHeader>

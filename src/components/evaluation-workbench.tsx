@@ -147,20 +147,28 @@ export function EvaluationWorkbench({
       : []),
   ];
   const readOnlyDemo = !localSmokeEnabled && demoAvailable;
+  const comparison = (
+    <SmokeExperiment
+      caseId={selectedCase.id}
+      enabled={localSmokeEnabled && cloudinaryConfigured && selectedCase.referenceReady}
+      demoAvailable={demoAvailable}
+    />
+  );
 
   return (
     <section className="flex flex-col gap-5" aria-labelledby="workbench-title">
+      {readOnlyDemo ? comparison : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1">
           <h2
             id="workbench-title"
             className="text-2xl font-semibold tracking-tight"
           >
-            Evaluation workbench
+            {readOnlyDemo ? "Inspect the dataset" : "Evaluation workbench"}
           </h2>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
             Select one of the 50 committed cases to inspect its reference,
-            prompt, and pass criteria. {readOnlyDemo ? "The recorded demo comparison below is a separate fixed sample." : "Then run or restore a local comparison below."}
+            prompt, and pass criteria. {readOnlyDemo ? "These selections do not change the recorded demo sample." : "Then run or restore a local comparison below."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -461,7 +469,7 @@ export function EvaluationWorkbench({
           </Card> : null}
         </aside>
       </div>
-      <SmokeExperiment caseId={selectedCase.id} enabled={localSmokeEnabled && cloudinaryConfigured && selectedCase.referenceReady} demoAvailable={demoAvailable} />
+      {!readOnlyDemo ? comparison : null}
     </section>
   );
 }

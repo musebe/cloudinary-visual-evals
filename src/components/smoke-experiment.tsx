@@ -41,6 +41,7 @@ import type {
 interface SmokeExperimentProps {
   caseId: string;
   enabled: boolean;
+  demoAvailable?: boolean;
 }
 
 type SmokeStreamEvent =
@@ -170,6 +171,8 @@ function parseStreamEvent(line: string, caseId: string): SmokeStreamEvent {
       const record = value.record;
       if (
         record.schemaVersion === "1.0" && typeof record.id === "string" &&
+        typeof record.completedAt === "string" && typeof record.startedAt === "string" &&
+        typeof record.datasetId === "string" && typeof record.datasetVersion === "string" &&
         Array.isArray(record.cases) && record.cases.length === 1 &&
         isObject(record.cases[0]) && record.cases[0].caseId === caseId &&
         Array.isArray(record.cases[0].variants) && record.cases[0].variants.length === 2 &&
@@ -310,7 +313,7 @@ function VariantResult({ result }: { result: ExperimentVariantResult }) {
   );
 }
 
-export function SmokeExperiment({ caseId, enabled }: SmokeExperimentProps) {
+export function SmokeExperiment({ caseId, enabled, demoAvailable = false }: SmokeExperimentProps) {
   const confirmationId = useId();
   const inFlight = useRef(false);
   const [confirmedCaseId, setConfirmedCaseId] = useState<string | null>(null);
@@ -321,21 +324,22 @@ export function SmokeExperiment({ caseId, enabled }: SmokeExperimentProps) {
   const [record, setRecord] = useState<ExperimentRunRecord | null>(null);
   const [failure, setFailure] = useState<ClientFailure | null>(null);
   const [disconnectedOutcome, setDisconnectedOutcome] = useState(false);
+  const readOnlyDemo = !enabled && demoAvailable;
   const unresolved = disconnectedOutcome || Boolean(record?.cases.some((item) =>
     item.variants.some((variant) => variant.status === "failed" && variant.failure.outcomeUnknown),
   ));
   const controlsDisabled = !enabled || running || loadingSaved || unresolved;
 
-  async function loadLastResult() {
-    if (running || loadingSaved || !enabled) return;
+  async function loadResult() {
+    if (running || loadingSaved || (!enabled && !demoAvailable)) return;
     setLoadingSaved(true);
     setFailure(null);
     try {
-      const response = await fetch("/api/experiments/smoke/latest", { cache: "no-store", credentials: "same-origin" });
-      if (!response.ok) throw new Error("The saved result could not be read.");
+      const response = await fetch(readOnlyDemo ? "/api/demo/experiment" : "/api/experiments/smoke/latest", { cache: "no-store", credentials: "same-origin" });
+      if (!response.ok) throw new Error(readOnlyDemo ? "The demo comparison is temporarily unavailable." : "The saved result could not be read.");
       const body: unknown = await response.json();
       if (!isObject(body) || !isObject(body.record) || !Array.isArray(body.record.cases) || !isObject(body.record.cases[0]) || typeof body.record.cases[0].caseId !== "string") {
-        throw new Error("No completed local smoke result is available yet.");
+        throw new Error(readOnlyDemo ? "No verified demo comparison is available." : "No completed local smoke result is available yet.");
       }
       const event = parseStreamEvent(JSON.stringify({ type: "result", record: body.record }), body.record.cases[0].caseId);
       if (event.type !== "result") throw new Error("The saved result is invalid.");
@@ -425,14 +429,18 @@ export function SmokeExperiment({ caseId, enabled }: SmokeExperimentProps) {
   }
 
   return (
-    <section className="@container flex min-w-0 flex-col gap-4" aria-label="One-case smoke experiment">
+    <section className="@container flex min-w-0 flex-col gap-4" aria-label={readOnlyDemo ? "Recorded demo comparison" : "One-case smoke experiment"}>
       <Card>
         <CardHeader>
-          <CardTitle><h2>One-case smoke test</h2></CardTitle>
-          <CardDescription>Next run: {caseId}. Compare the committed prompt with a text-preservation candidate using the same model.</CardDescription>
+          <CardTitle><h2>{readOnlyDemo ? "See a real comparison" : "One-case smoke test"}</h2></CardTitle>
+          <CardDescription>
+            {readOnlyDemo
+              ? "Explore a recorded Cloudinary experiment: two generated images, their analysis, and the policy decisions. This fixed sample is separate from the selected dataset case above."
+              : <>Next run: {caseId}. Compare the committed prompt with a text-preservation candidate using the same model.</>}
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <FieldGroup>
+          {enabled ? <FieldGroup>
             <Field orientation="horizontal" data-disabled={controlsDisabled}>
               <input
                 id={confirmationId}
@@ -448,8 +456,10 @@ export function SmokeExperiment({ caseId, enabled }: SmokeExperimentProps) {
                 <FieldDescription id={`${confirmationId}-description`}>Up to two generation requests and six Analyze API calls. Confirm again before every new run.</FieldDescription>
               </FieldContent>
             </Field>
-          </FieldGroup>
-          {!enabled ? <p className="text-sm text-muted-foreground">Local smoke execution is not enabled. Complete the readiness checks first.</p> : null}
+          </FieldGroup> : null}
+          {readOnlyDemo ? (
+            <p className="text-sm text-muted-foreground">Historical one-case sample, not a full benchmark. Viewing it does not generate new images or run paid analysis.</p>
+          ) : !enabled ? <p className="text-sm text-muted-foreground">A comparison is not available yet.</p> : null}
           {progress.length > 0 ? (
             <div className="flex flex-col gap-2" role="status" aria-live="polite" aria-atomic="true">
               {["baseline", "candidate"].map((variant) => {
@@ -461,7 +471,7 @@ export function SmokeExperiment({ caseId, enabled }: SmokeExperimentProps) {
           {failure ? (
             <Alert variant="destructive">
               <AlertCircleIcon aria-hidden="true" />
-              <AlertTitle>Smoke test could not finish</AlertTitle>
+              <AlertTitle>{readOnlyDemo ? "Comparison could not load" : "Smoke test could not finish"}</AlertTitle>
               <AlertDescription>{failure.message} ({failure.code})</AlertDescription>
             </Alert>
           ) : null}
@@ -472,15 +482,15 @@ export function SmokeExperiment({ caseId, enabled }: SmokeExperimentProps) {
               <AlertDescription>A paid job may still be running or may have completed. New submissions are locked in this view. Preserve the JSON and inspect the server .visual-evals journal and accepted task IDs. Refreshing clears the view, not Cloudinary jobs or the server lock.</AlertDescription>
             </Alert>
           ) : null}
-          <p className="text-xs text-muted-foreground">Refresh clears the view. Use Load last result to restore the latest local journal without generating again, or download the JSON to retain the full result.</p>
+          {enabled ? <p className="text-xs text-muted-foreground">Refresh clears the view. Use Load last result to restore the latest local journal without generating again, or download the JSON to retain the full result.</p> : null}
         </CardContent>
         <CardFooter className="flex-wrap gap-2">
-          <Button type="button" className="min-h-11" disabled={controlsDisabled || confirmedCaseId !== caseId} onClick={runSmoke}>
+          {enabled ? <Button type="button" className="min-h-11" disabled={controlsDisabled || confirmedCaseId !== caseId} onClick={runSmoke}>
             {running ? <LoaderCircleIcon className="animate-spin motion-reduce:animate-none" data-icon="inline-start" aria-hidden="true" /> : <PlayIcon data-icon="inline-start" aria-hidden="true" />}
             {running ? "Running smoke test…" : "Run one-case smoke test"}
-          </Button>
-          <Button type="button" variant="outline" className="min-h-11" disabled={!enabled || running || loadingSaved} onClick={loadLastResult}>
-            {loadingSaved ? "Loading result…" : "Load last result"}
+          </Button> : null}
+          <Button type="button" variant={readOnlyDemo ? "default" : "outline"} className="min-h-11" disabled={(!enabled && !demoAvailable) || running || loadingSaved} onClick={loadResult}>
+            {loadingSaved ? "Loading result…" : readOnlyDemo ? "View demo comparison" : "Load last result"}
           </Button>
           <Button type="button" variant="outline" className="min-h-11" disabled={running || (!record && !failure && progress.length === 0)} onClick={downloadJson}>
             <DownloadIcon data-icon="inline-start" aria-hidden="true" />Download JSON
@@ -489,7 +499,10 @@ export function SmokeExperiment({ caseId, enabled }: SmokeExperimentProps) {
       </Card>
       {record ? (
         <div className="flex min-w-0 flex-col gap-3">
-          <p className="break-all text-sm text-muted-foreground">Experiment {record.id} · {record.cases[0].caseId}</p>
+          <p className="break-all text-sm text-muted-foreground">
+            {readOnlyDemo ? "Recorded sample" : "Experiment"} {record.id} · {record.cases[0].caseId}
+            {readOnlyDemo ? <> · completed {record.completedAt}</> : null}
+          </p>
           <div className="grid min-w-0 gap-4 @3xl:grid-cols-2">
             {record.cases[0].variants.map((variant) => <VariantResult key={`${record.id}-${variant.variant}`} result={variant} />)}
           </div>

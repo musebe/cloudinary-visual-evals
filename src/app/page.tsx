@@ -34,7 +34,7 @@ function EvaluationWorkbenchFallback() {
   return (
     <Card aria-busy="true">
       <CardContent className="py-8 text-sm text-muted-foreground">
-        Checking local runtime readiness…
+        Checking runtime readiness…
       </CardContent>
     </Card>
   );
@@ -72,9 +72,9 @@ export default function Home() {
           Compare generated product images.
         </h1>
         <p className="text-pretty text-base leading-7 text-muted-foreground">
-          Choose a fixed product-image case, run a baseline and candidate, and
-          inspect their Cloudinary-backed evidence. Restore the last local
-          result to explore the comparison without generating again.
+          Explore a recorded baseline and candidate with Cloudinary-backed
+          images and scoring evidence. Inspect the fixed dataset, or run a
+          new comparison in the local development app.
         </p>
       </section>
 

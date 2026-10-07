@@ -49,6 +49,7 @@ import { SmokeExperiment } from "@/components/smoke-experiment";
 interface EvaluationWorkbenchProps {
   cloudinaryConfigured: boolean;
   data: WorkbenchData;
+  demoAvailable?: boolean;
   localSmokeEnabled: boolean;
 }
 
@@ -98,6 +99,7 @@ function AttributeList({ items }: { items: string[] }) {
 export function EvaluationWorkbench({
   cloudinaryConfigured,
   data,
+  demoAvailable = cloudinaryConfigured && data.references.boundCount === data.references.expectedCount,
   localSmokeEnabled,
 }: EvaluationWorkbenchProps) {
   const pathname = usePathname();
@@ -143,8 +145,8 @@ export function EvaluationWorkbench({
     ...(!selectedCase.referenceReady
       ? ["The selected product reference is not bound."]
       : []),
-    ...(!localSmokeEnabled ? ["Set CLOUDINARY_ENABLE_LOCAL_SMOKE=true and restart pnpm dev to enable the local smoke test."] : []),
   ];
+  const readOnlyDemo = !localSmokeEnabled && demoAvailable;
 
   return (
     <section className="flex flex-col gap-5" aria-labelledby="workbench-title">
@@ -157,8 +159,8 @@ export function EvaluationWorkbench({
             Evaluation workbench
           </h2>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-            Select one of the 50 committed cases and inspect the evidence
-            contract before any paid generation request runs.
+            Select one of the 50 committed cases to inspect its reference,
+            prompt, and pass criteria. {readOnlyDemo ? "The recorded demo comparison below is a separate fixed sample." : "Then run or restore a local comparison below."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -196,7 +198,7 @@ export function EvaluationWorkbench({
         <div className="flex min-w-0 flex-col gap-5">
           <Card>
             <CardHeader className="border-b">
-              <CardTitle>Choose a case</CardTitle>
+              <CardTitle>Inspect a dataset case</CardTitle>
               <CardDescription>
                 Every product and prompt-family pair maps to one pre-labeled
                 test.
@@ -398,13 +400,13 @@ export function EvaluationWorkbench({
 
         <aside
           className="flex min-w-0 flex-col gap-5 xl:sticky xl:top-6"
-          aria-label="Run readiness"
+          aria-label={readOnlyDemo ? "Demo status" : "Run readiness"}
         >
           <Card>
             <CardHeader className="border-b">
-              <CardTitle>Run readiness</CardTitle>
+              <CardTitle>{readOnlyDemo ? "Demo status" : "Run readiness"}</CardTitle>
               <CardDescription>
-                Checks are explicit before generation is unlocked.
+                {readOnlyDemo ? "Inspect the dataset and view recorded evidence." : "Checks are explicit before generation is unlocked."}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
@@ -422,20 +424,20 @@ export function EvaluationWorkbench({
                 ready={selectedCase.referenceReady}
               />
               <Separator />
-              <ReadinessRow label="Generation add-on" detail="Checked by run" />
+              <ReadinessRow label="Generation evidence" detail={readOnlyDemo ? "Recorded sample" : "Checked by run"} />
               <Separator />
-              <ReadinessRow label="Analysis add-ons" detail="Checked by run" />
+              <ReadinessRow label="Analysis evidence" detail={readOnlyDemo ? "Recorded sample" : "Checked by run"} />
               <Separator />
-              <ReadinessRow label="Experiment runner" detail={localSmokeEnabled ? "Local smoke" : "Disabled"} ready={localSmokeEnabled} />
+              <ReadinessRow label="Mode" detail={localSmokeEnabled ? "Local smoke" : demoAvailable ? "Read-only demo" : "Unavailable"} ready={localSmokeEnabled || demoAvailable} />
             </CardContent>
           </Card>
 
-          {!localSmokeEnabled ? <Alert>
+          {!localSmokeEnabled && !demoAvailable ? <Alert>
             <LockKeyholeIcon aria-hidden="true" />
-            <AlertTitle>Smoke run locked</AlertTitle>
+            <AlertTitle>Comparison unavailable</AlertTitle>
             <AlertDescription>
-              Case inspection is ready. Live generation remains locked so an
-              incomplete setup cannot spend quota or create misleading results.
+              Dataset inspection is available. A verified comparison will appear
+              once its Cloudinary evidence is configured.
             </AlertDescription>
           </Alert> : null}
 
@@ -459,7 +461,7 @@ export function EvaluationWorkbench({
           </Card> : null}
         </aside>
       </div>
-      <SmokeExperiment caseId={selectedCase.id} enabled={localSmokeEnabled && cloudinaryConfigured && selectedCase.referenceReady} />
+      <SmokeExperiment caseId={selectedCase.id} enabled={localSmokeEnabled && cloudinaryConfigured && selectedCase.referenceReady} demoAvailable={demoAvailable} />
     </section>
   );
 }

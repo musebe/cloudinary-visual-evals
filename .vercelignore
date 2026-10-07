@@ -1,0 +1,7 @@
+.env*
+.visual-evals
+.git
+.next
+node_modules
+coverage
+docs

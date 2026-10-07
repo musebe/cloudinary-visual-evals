@@ -144,7 +144,18 @@ export function createCloudinaryGenerationTransport(
       });
     }
 
-    const body = await readJson(response);
+    let body: unknown;
+    try {
+      body = await readJson(response);
+    } catch {
+      throw new CloudinaryGenerationError({
+        code: "response_stream_error",
+        operation,
+        outcomeUnknown: operation === "start",
+        retryable: operation === "poll",
+        status: response.status,
+      });
+    }
 
     if (!response.ok) {
       const parsed = generationErrorResponseSchema.safeParse(body);

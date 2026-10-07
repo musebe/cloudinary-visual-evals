@@ -1,12 +1,12 @@
 # Evaluation dataset
 
-`product-images-v1` is the input evidence for the first visual-regression benchmark. It is a draft until the reference assets are created, reviewed, uploaded, and bound to their logical keys.
+`product-images-v1` is the input evidence for the first visual-regression benchmark. All ten reference assets are uploaded, verified through authenticated Cloudinary readback, and bound to their logical keys. The dataset remains marked `draft` while reference review and live evaluation are pending.
 
 ## Why the labels come first
 
 Every prompt and expected attribute is committed before a baseline or candidate is generated. This prevents the benchmark from being rewritten around a preferred output. The dataset contains no scores, pass rates, generated URLs, or expected model outcomes.
 
-The current version is `2026-10-07.1` and uses the label protocol `human-authored-before-generation`.
+The current version is `2026-10-07.2` and uses the label protocol `human-authored-before-generation`. This revision explicitly addresses reference image `[1]` in every prompt.
 
 ## Coverage
 
@@ -28,7 +28,17 @@ Every case contains:
 - Required and forbidden visual attributes.
 - Required scoring dimensions and output dimensions.
 
-The next asset checkpoint will bind each logical reference key to a real Cloudinary `asset_id` and `public_id` in a separate manifest. Keeping that binding separate lets the labels remain stable if an asset is re-uploaded.
+[`reference-assets.generated.json`](../src/data/reference-assets.generated.json) now binds all ten logical reference keys to real Cloudinary `asset_id` and `public_id` values. Keeping these environment-specific bindings separate preserves the dataset labels, but an intentional reference replacement still requires review and versioning.
+
+## Reference inputs and limitations
+
+The ten inputs are 1024 × 1024 PNG illustrations of the fictional products with exact-text labels `EVAL-01` through `EVAL-10`. [`provision-reference-assets.mjs`](../scripts/provision-reference-assets.mjs) creates fixed SVG designs and uploads them to public Cloudinary `upload` assets. They are synthetic illustrations, not real product photographs or AI-generated benchmark results.
+
+Run `pnpm cloudinary:references` to reuse and revalidate them. Authenticated Admin API readback confirms their persisted dataset version, logical key, expected text, identity, and media properties. Each manifest binding includes a SHA-256 hash of the delivered PNG bytes in `contentSha256`, not a Cloudinary ETag. Changed previously bound identities, versions, or bytes are rejected.
+
+The workbench exposes a versioned Cloudinary preview for each selected product and reports `10 / 10 bound`. A reference can support inspecting shape, color, composition, and text constraints, but these illustrations do not prove photorealistic materials, real-world scale, or production catalog fidelity. Human review is still needed to judge whether the references represent the intended labels before using them to interpret model comparisons.
+
+No baseline or candidate generation has run against these inputs yet. The dataset contains no measured performance claim, calibrated threshold, or scoring-accuracy result.
 
 ## Initial thresholds
 
@@ -48,5 +58,8 @@ The aggregate policy never averages away a failed dimension. A hard violation or
 
 - Dataset contracts: `src/lib/evaluations/contracts.ts`
 - Dataset definition: `src/data/product-images-v1.ts`
+- Reference designs and provisioning: `scripts/provision-reference-assets.mjs`
+- Reference bindings: `src/data/reference-assets.generated.json` and `src/data/reference-assets.ts`
+- Pre-generation reference readback: `src/lib/cloudinary/reference-readback.server.ts`
 - Decision policy: `src/lib/evaluations/policy.ts`
 - Dataset and policy tests: `src/data/product-images-v1.test.ts` and `src/lib/evaluations/policy.test.ts`

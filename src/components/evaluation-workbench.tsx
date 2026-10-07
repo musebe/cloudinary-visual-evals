@@ -7,6 +7,7 @@ import {
   LockKeyholeIcon,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { CldImage } from "next-cloudinary";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -191,7 +192,7 @@ export function EvaluationWorkbench({
         ))}
       </div>
 
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_21rem]">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] items-start gap-5 xl:grid-cols-[minmax(0,1fr)_21rem]">
         <div className="flex min-w-0 flex-col gap-5">
           <Card>
             <CardHeader className="border-b">
@@ -287,6 +288,24 @@ export function EvaluationWorkbench({
               </CardAction>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
+              {selectedCase.referencePreview ? (
+                <figure className="flex flex-col gap-2">
+                  <CldImage
+                    key={selectedCase.referencePreview.publicId}
+                    src={selectedCase.referencePreview.publicId}
+                    version={selectedCase.referencePreview.version}
+                    width={selectedCase.referencePreview.width}
+                    height={selectedCase.referencePreview.height}
+                    sizes="(max-width: 640px) calc(100vw - 80px), 320px"
+                    crop="fit"
+                    alt={`Synthetic reference illustration of ${selectedCase.productName}, labeled ${selectedCase.expectedText.join(", ")}`}
+                    className="aspect-square w-full max-w-80 rounded-lg border object-contain"
+                  />
+                  <figcaption className="text-xs text-muted-foreground">
+                    Fixed synthetic reference · Cloudinary v{selectedCase.referencePreview.version}
+                  </figcaption>
+                </figure>
+              ) : null}
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -377,7 +396,7 @@ export function EvaluationWorkbench({
         </div>
 
         <aside
-          className="flex flex-col gap-5 xl:sticky xl:top-6"
+          className="flex min-w-0 flex-col gap-5 xl:sticky xl:top-6"
           aria-label="Run readiness"
         >
           <Card>

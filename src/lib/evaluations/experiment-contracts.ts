@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import type { CompletedGenerationProvenance } from "@/lib/cloudinary/image-generation-contracts";
+import type {
+  CompletedGenerationProvenance,
+  EvaluationGenerationJob,
+  GenerationTaskResponse,
+} from "@/lib/cloudinary/image-generation-contracts";
 import { generationConfigurationSchema } from "@/lib/cloudinary/image-generation-contracts";
 
 import type { EvaluationDataset, ScoreDimension } from "./contracts";
@@ -63,10 +67,23 @@ export interface ExperimentProgressEvent {
 
 export interface ExperimentFailure {
   code: string;
+  generation?: ExperimentGenerationRecovery;
   outcomeUnknown: boolean;
   phase: Exclude<ExperimentPhase, "queued" | "complete" | "failed">;
   requestId: string | null;
+  /** Accepted or uncertain generations must be reconciled, not resubmitted. */
   retryable: boolean;
+}
+
+/** Reconcile this submission without starting another billable generation. */
+export interface ExperimentGenerationRecovery {
+  job: EvaluationGenerationJob;
+  lastStatus: GenerationTaskResponse["data"]["status"] | "unknown";
+  /** Request ID returned when the generation was accepted, if received. */
+  requestId: string | null;
+  submittedAt: string;
+  targetPublicId: string;
+  taskId: string | null;
 }
 
 export type ExperimentVariantResult =

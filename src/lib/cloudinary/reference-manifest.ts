@@ -13,7 +13,7 @@ export const referenceAssetSchema = z
   .object({
     assetId: z.string().trim().regex(/^[a-zA-Z0-9_-]{16,128}$/),
     bytes: z.number().int().positive(),
-    etag: z.string().trim().min(8).max(128),
+    contentSha256: z.string().regex(/^[a-f0-9]{64}$/),
     format: z.string().trim().min(2).max(20),
     height: z.number().int().positive(),
     key: identifierSchema,

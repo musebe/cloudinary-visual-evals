@@ -13,7 +13,7 @@ import {
 const boundAsset = {
   assetId: "0123456789abcdef0123456789abcdef",
   bytes: 200_000,
-  etag: "abcdef0123456789abcdef0123456789",
+  contentSha256: "a".repeat(64),
   format: "png",
   height: 1024,
   key: productImagesV1.products[0].referenceAssetKey,
@@ -25,12 +25,13 @@ const boundAsset = {
 };
 
 describe("reference asset manifest", () => {
-  it("reports every reference as missing until real Cloudinary assets are bound", () => {
+  it("binds all ten uploaded references to the committed dataset", () => {
     const coverage = inspectReferenceCoverage(productImagesV1, referenceAssets);
 
-    expect(coverage.configured).toBe(false);
-    expect(coverage.missingKeys).toHaveLength(10);
+    expect(coverage.configured).toBe(true);
+    expect(coverage.missingKeys).toEqual([]);
     expect(coverage.unexpectedKeys).toEqual([]);
+    expect(referenceAssets.assets).toHaveLength(10);
   });
 
   it("resolves a logical key to an immutable Cloudinary asset identity", () => {
@@ -46,7 +47,7 @@ describe("reference asset manifest", () => {
 
   it("fails explicitly instead of substituting a fake reference", () => {
     expect(() =>
-      resolveReferenceAsset(referenceAssets, boundAsset.key),
+      resolveReferenceAsset({ ...referenceAssets, assets: [] }, boundAsset.key),
     ).toThrow(MissingReferenceAssetError);
   });
 

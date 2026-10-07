@@ -18,7 +18,7 @@ export const cloudinaryEnvironmentSchema = z.object({
     .string()
     .trim()
     .min(1)
-    .regex(/^[a-z0-9][a-z0-9/_-]*$/i)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/)
     .default("visual-evals"),
   CLOUDINARY_ADMIN_API_TIMEOUT_MS: z.coerce
     .number()

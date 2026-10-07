@@ -42,7 +42,7 @@ describe("buildEvaluationWorkbenchData", () => {
       output: { height: 1024, width: 1024 },
       productName: "Cobalt trail bottle",
       promptFamilyLabel: "Studio packshot",
-      referenceReady: false,
+      referenceReady: true,
     });
     expect(evaluationCase?.requiredAttributes).toContain(
       "cobalt blue cylindrical bottle",
@@ -63,7 +63,7 @@ describe("buildEvaluationWorkbenchData", () => {
         {
           assetId: "asset_0123456789abcdef",
           bytes: 128_000,
-          etag: "0123456789abcdef",
+          contentSha256: "a".repeat(64),
           format: "png",
           height: 1024,
           key: "reference-cobalt-trail-bottle-v1",
@@ -76,7 +76,7 @@ describe("buildEvaluationWorkbenchData", () => {
         {
           assetId: "asset_fedcba9876543210",
           bytes: 128_000,
-          etag: "fedcba9876543210",
+          contentSha256: "b".repeat(64),
           format: "png",
           height: 1024,
           key: "reference-unexpected-product-v1",
@@ -101,5 +101,27 @@ describe("buildEvaluationWorkbenchData", () => {
         (candidate) => candidate.productId === "cobalt-trail-bottle",
       )?.referenceReady,
     ).toBe(true);
+  });
+
+  it("does not show stale references as ready", () => {
+    const workbench = buildEvaluationWorkbenchData(productImagesV1, {
+      ...referenceAssets,
+      datasetVersion: "2026-10-07.1",
+    });
+    expect(workbench.references.ready).toBe(false);
+    expect(workbench.references.boundCount).toBe(0);
+    expect(workbench.cases.every((item) => !item.referenceReady)).toBe(true);
+    expect(workbench.cases.every((item) => item.referencePreview === null)).toBe(true);
+  });
+
+  it("exposes preview fields only for publicly deliverable references", () => {
+    const publicWorkbench = buildEvaluationWorkbenchData(productImagesV1, referenceAssets);
+    expect(publicWorkbench.cases[0].referencePreview?.publicId).toBe(referenceAssets.assets[0].publicId);
+    const restrictedWorkbench = buildEvaluationWorkbenchData(productImagesV1, {
+      ...referenceAssets,
+      assets: referenceAssets.assets.map((asset) => ({ ...asset, type: "authenticated" })),
+    });
+    expect(restrictedWorkbench.cases[0].referenceReady).toBe(true);
+    expect(restrictedWorkbench.cases[0].referencePreview).toBeNull();
   });
 });

@@ -1,4 +1,7 @@
-import type { ReferenceManifest } from "@/lib/cloudinary/reference-manifest";
+import {
+  inspectReferenceCoverage,
+  type ReferenceManifest,
+} from "@/lib/cloudinary/reference-manifest";
 
 import type {
   EvaluationDataset,
@@ -43,6 +46,12 @@ export interface WorkbenchCase {
   promptVersion: string;
   referenceAssetKey: string;
   referenceReady: boolean;
+  referencePreview: {
+    height: number;
+    publicId: string;
+    version: number;
+    width: number;
+  } | null;
   requiredAttributes: string[];
   thresholds: WorkbenchThreshold[];
 }
@@ -83,13 +92,13 @@ export function buildEvaluationWorkbenchData(
   const expectedReferenceKeys = new Set(
     dataset.products.map((product) => product.referenceAssetKey),
   );
-  const boundReferenceKeys = new Set(
-    manifest.assets
-      .map((asset) => asset.key)
-      .filter((key) => expectedReferenceKeys.has(key)),
-  );
-  const missingKeys = [...expectedReferenceKeys].filter(
-    (key) => !boundReferenceKeys.has(key),
+  const coverage = inspectReferenceCoverage(dataset, manifest);
+  const versionMatches = manifest.datasetId === dataset.id &&
+    manifest.datasetVersion === dataset.version;
+  const boundAssetsByKey = new Map(
+    (versionMatches ? manifest.assets : [])
+      .filter((asset) => expectedReferenceKeys.has(asset.key))
+      .map((asset) => [asset.key, asset]),
   );
   const promptFamilies = [
     ...new Set(dataset.cases.map((evaluationCase) => evaluationCase.promptFamily)),
@@ -104,6 +113,8 @@ export function buildEvaluationWorkbenchData(
       );
     }
 
+    const reference = boundAssetsByKey.get(evaluationCase.referenceAssetKey);
+
     return {
       expectedText: evaluationCase.expected.exactText,
       forbidAdditionalText: evaluationCase.expected.forbidAdditionalText,
@@ -117,9 +128,13 @@ export function buildEvaluationWorkbenchData(
       promptFamilyLabel: promptFamilyLabels[evaluationCase.promptFamily],
       promptVersion: evaluationCase.promptVersion,
       referenceAssetKey: evaluationCase.referenceAssetKey,
-      referenceReady: boundReferenceKeys.has(
-        evaluationCase.referenceAssetKey,
-      ),
+      referenceReady: Boolean(reference),
+      referencePreview: reference?.type === "upload" ? {
+        height: reference.height,
+        publicId: reference.publicId,
+        version: reference.version,
+        width: reference.width,
+      } : null,
       requiredAttributes: evaluationCase.expected.requiredAttributes,
       thresholds: evaluationCase.requiredDimensions.map((dimension) => ({
         dimension,
@@ -152,10 +167,10 @@ export function buildEvaluationWorkbenchData(
       value: promptFamily,
     })),
     references: {
-      boundCount: boundReferenceKeys.size,
+      boundCount: boundAssetsByKey.size,
       expectedCount: expectedReferenceKeys.size,
-      missingKeys,
-      ready: missingKeys.length === 0,
+      missingKeys: coverage.missingKeys,
+      ready: coverage.configured,
     },
   };
 }

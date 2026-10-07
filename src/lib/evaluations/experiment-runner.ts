@@ -179,6 +179,7 @@ async function waitForCompletedGeneration(
   dependencies: ExperimentRunnerDependencies,
   options: NormalizedRunnerOptions,
   emitWaiting: (attempt: number) => Promise<void>,
+  onTaskResponse: (response: GenerationTaskResponse) => void,
 ) {
   let response = initialResponse;
 
@@ -195,6 +196,7 @@ async function waitForCompletedGeneration(
       dependencies,
       options,
     );
+    onTaskResponse(response);
 
     if (taskStatus(response) === "completed") return response;
     if (taskStatus(response) === "failed") {
@@ -202,7 +204,7 @@ async function waitForCompletedGeneration(
     }
   }
 
-  throw new ExperimentRunnerError("generation_poll_limit_reached", false, true);
+  throw new ExperimentRunnerError("generation_poll_limit_reached", true, false);
 }
 
 function configurationForVariant(
@@ -225,15 +227,22 @@ async function runVariant(input: {
 }): Promise<ExperimentVariantResult> {
   const configuration = configurationForVariant(input.plan, input.variant);
   let phase: ExperimentFailure["phase"] = "starting_generation";
+  let generation: ExperimentFailure["generation"];
 
   const emit = async (nextPhase: ExperimentPhase, attempt = 0) => {
-    await input.onProgress?.({
-      attempt,
-      caseId: input.evaluationCase.id,
-      occurredAt: input.dependencies.now().toISOString(),
-      phase: nextPhase,
-      variant: input.variant,
-    });
+    if (!input.onProgress) return;
+
+    try {
+      await input.onProgress({
+        attempt,
+        caseId: input.evaluationCase.id,
+        occurredAt: input.dependencies.now().toISOString(),
+        phase: nextPhase,
+        variant: input.variant,
+      });
+    } catch {
+      // Optional observers cannot change provider results or orphan paid jobs.
+    }
   };
 
   await emit("queued");
@@ -251,7 +260,21 @@ async function runVariant(input: {
     const submittedAt = input.dependencies.now();
 
     await emit("starting_generation");
+    generation = {
+      job,
+      lastStatus: "unknown",
+      requestId: null,
+      submittedAt: submittedAt.toISOString(),
+      targetPublicId: job.request.target.public_id,
+      taskId: null,
+    };
     const initialResponse = await input.dependencies.startGeneration(job);
+    generation = {
+      ...generation,
+      lastStatus: initialResponse.data.status,
+      requestId: initialResponse.request_id,
+      taskId: initialResponse.data.task_id,
+    };
 
     phase = "waiting_generation";
     const completedResponse = await waitForCompletedGeneration(
@@ -259,6 +282,11 @@ async function runVariant(input: {
       input.dependencies,
       input.options,
       (attempt) => emit("waiting_generation", attempt),
+      (response) => {
+        if (generation) {
+          generation = { ...generation, lastStatus: response.data.status };
+        }
+      },
     );
     const completedAt = input.dependencies.now();
     const provenance = completeGenerationProvenance({
@@ -290,7 +318,23 @@ async function runVariant(input: {
       variant: input.variant,
     };
   } catch (error) {
-    const failure = failureFromError(error, phase);
+    const errorFailure = failureFromError(error, phase);
+    const generationUnresolved =
+      generation?.lastStatus === "pending" ||
+      generation?.lastStatus === "processing" ||
+      generation?.lastStatus === "unknown";
+    const failure: ExperimentFailure = {
+      ...errorFailure,
+      ...(generation ? { generation } : {}),
+      outcomeUnknown:
+        errorFailure.outcomeUnknown ||
+        Boolean(generation?.taskId && generationUnresolved),
+      requestId: errorFailure.requestId ?? generation?.requestId ?? null,
+      retryable:
+        errorFailure.retryable &&
+        !generation?.taskId &&
+        !errorFailure.outcomeUnknown,
+    };
     await emit("failed");
 
     return {

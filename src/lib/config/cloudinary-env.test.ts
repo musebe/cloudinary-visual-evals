@@ -43,4 +43,14 @@ describe("Cloudinary environment", () => {
     expect(inspection.configured).toBe(false);
     expect(inspection.invalid).toEqual(["CLOUDINARY_API_SECRET"]);
   });
+
+  it.each(["Visual-Evals", "visual_evals", "visual-evals/", "visual-evals//runs"])(
+    "rejects a folder incompatible with generation targets: %s",
+    (folder) => {
+      expect(inspectCloudinaryEnvironment({
+        ...validEnvironment,
+        CLOUDINARY_PROJECT_FOLDER: folder,
+      }).configured).toBe(false);
+    },
+  );
 });

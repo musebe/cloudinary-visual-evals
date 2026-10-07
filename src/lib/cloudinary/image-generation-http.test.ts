@@ -18,7 +18,7 @@ const evaluationCase = productImagesV1.cases[0];
 const reference: ReferenceAsset = {
   assetId: "0123456789abcdef0123456789abcdef",
   bytes: 250_000,
-  etag: "abcdef0123456789abcdef0123456789",
+  contentSha256: "a".repeat(64),
   format: "png",
   height: 1024,
   key: evaluationCase.referenceAssetKey,
@@ -61,6 +61,17 @@ function acceptedResponse() {
 }
 
 describe("Cloudinary image generation transport", () => {
+  it("sanitizes a failed response stream without retrying generation", async () => {
+    const transport = createCloudinaryGenerationTransport({
+      apiKey, apiSecret, cloudName: "visual-evals-demo", timeoutMs: 10_000,
+      fetchImpl: async () => new Response(new ReadableStream({
+        start(controller) { controller.error(new Error(`stream error ${apiSecret}`)); },
+      }), { status: 202 }),
+    });
+    await expect(transport.start(job)).rejects.toMatchObject({
+      code: "response_stream_error", operation: "start", outcomeUnknown: true, retryable: false,
+    });
+  });
   it("sends one asynchronous server request with Basic auth and no caching", async () => {
     let requestUrl = "";
     let requestInit: RequestInit | undefined;

@@ -4,7 +4,7 @@ Checkpoint 4 implements the server-side boundary for repeatable baseline and can
 
 ## Why the pipeline is asynchronous
 
-Cloudinary Image Generation can run synchronously or asynchronously. This project requests asynchronous `image_to_image` jobs so a Next.js request does not need to stay open while a model generates an image. Cloudinary returns a task ID, and the later experiment runner will persist and poll that task.
+Cloudinary Image Generation can run synchronously or asynchronously. This project requests asynchronous `image_to_image` jobs so a Next.js request does not need to stay open while a model generates an image. Cloudinary returns a task ID, which the implemented experiment runner retains and polls. Durable run persistence and a browser-facing run endpoint are not enabled yet.
 
 The adapter deliberately separates two operations:
 
@@ -33,11 +33,15 @@ The project does not silently prepend instructions to a labeled prompt. Prompt c
 
 ## Reference manifest
 
-The dataset stores stable logical keys rather than environment-specific URLs. [`reference-assets.ts`](../src/data/reference-assets.ts) maps those keys to real Cloudinary identities after reference images are uploaded.
+The dataset stores stable logical keys rather than environment-specific URLs. [`reference-assets.ts`](../src/data/reference-assets.ts) validates and loads [`reference-assets.generated.json`](../src/data/reference-assets.generated.json), which binds all ten keys to real Cloudinary identities for dataset version `2026-10-07.2`.
 
-Each binding retains the immutable `asset_id`, public ID, version, ETag, media dimensions, format, and byte size. Version and ETag make an overwritten reference detectable even though its Cloudinary asset ID can remain stable.
+Each binding retains the immutable `asset_id`, public ID, version, resource and delivery types, media dimensions, format, byte size, and `contentSha256`. The SHA-256 fingerprint is calculated from delivered PNG bytes; it is not an ETag copied from a provider response. Identity, version, and content fingerprint checks make changed references detectable.
 
-The checked-in manifest is intentionally empty. It reports all ten references as missing instead of substituting sample IDs or fake images. A later asset-ingestion checkpoint will populate it only from authenticated Cloudinary readback.
+The references are fixed synthetic illustrations of fictional products, created from SVG designs and uploaded as 1024 × 1024 public PNG images. They are not product photographs or generated baseline and candidate outputs. The workbench displays a versioned preview of the selected reference, separate from any future generated result.
+
+Run `pnpm cloudinary:references` to provision missing references or revalidate existing bindings. The script uses authenticated Admin API readback to verify persisted context and identity, hashes the delivered bytes, and writes the manifest only after all ten assets pass. Reruns refuse changed previously bound assets instead of silently replacing the input evidence.
+
+Before paid generation, the server adapter additionally reads every selected reference by immutable asset ID. It verifies dataset and reference context, identity, version, media properties, and a versioned HTTPS Cloudinary URL, then checks the original PNG byte count and `contentSha256`. A mismatch blocks the run. A workbench **Bound** label shows manifest coverage, not a new authenticated live readback on every page view.
 
 ## Provenance record
 
@@ -47,7 +51,7 @@ When a task completes, the normalizer records both requested and returned values
 | --- | --- |
 | Evaluation identity | Dataset ID and version, case ID, experiment ID, variant, configuration ID |
 | Prompt identity | Prompt version, executed prompt, SHA-256 prompt hash |
-| Reference snapshot | Logical key, asset ID, public ID, version, ETag |
+| Reference snapshot | Logical key, asset ID, public ID, version, content SHA-256 fingerprint |
 | Requested generation | Model selector, seed, dimensions, format, target public ID |
 | Resolved generation | Concrete model ID, family, tier, returned seed |
 | Managed output | Asset ID, public ID, version, delivery type, URL, actual dimensions, format, bytes |
@@ -66,7 +70,7 @@ After normalization, the server reads the completed image back through the Cloud
 - The public app has no unbounded generation endpoint.
 - The full benchmark would require 100 generations: 50 baseline plus 50 candidate. The runner will start with a smoke subset and stop when quota evidence says it should not continue.
 
-Before live generation, register the Cloudinary Image Generation add-on, fill `.env.local`, upload or generate the ten rights-cleared references, and bind their authenticated readback values in the reference manifest.
+Reference provisioning and authenticated readback are complete for the configured environment. Before live generation, confirm Cloudinary Image Generation and analysis add-on access and quotas, review the synthetic reference inputs, and enable the guarded run workflow. No live generation score or benchmark result is claimed yet.
 
 Official references:
 

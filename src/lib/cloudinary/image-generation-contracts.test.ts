@@ -15,7 +15,7 @@ const evaluationCase = productImagesV1.cases[0];
 const reference: ReferenceAsset = {
   assetId: "0123456789abcdef0123456789abcdef",
   bytes: 250_000,
-  etag: "abcdef0123456789abcdef0123456789",
+  contentSha256: "a".repeat(64),
   format: "png",
   height: 1024,
   key: evaluationCase.referenceAssetKey,

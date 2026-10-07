@@ -20,11 +20,13 @@ This file records implementation decisions and verification evidence while the d
 - Structured scoring checkpoint: passed ESLint, TypeScript, 56 tests across 11 files, and a Next.js production build on October 7, 2026.
 - Evaluation workbench slice: passed ESLint, TypeScript, 59 tests across 12 files, a Next.js production build, and query-addressable case smoke checks on October 7, 2026.
 - Repeatable experiment runner: passed ESLint, TypeScript, 68 tests across 15 files, and a Next.js production build on October 7, 2026.
+- Reference and runner-safety checkpoint: passed ESLint, TypeScript, 88 tests across 16 files, and a Next.js production build on October 8, 2026. The reference provisioning rerun reused all ten assets; selected-reference authenticated preflight passed. A browser check at 390 px verified a loaded EVAL-10 preview, the Geist font, and no horizontal overflow.
 - `GET /api/health`: verified as an uncached dynamic route; it returned the expected HTTP 503 and a secret-free JSON body while local credentials were absent.
 - Authenticated Cloudinary ping: connected successfully to the configured product environment on October 7, 2026; the command exposed no credentials.
 - Domain tests: begin with the versioned dataset and evaluation-policy checkpoint.
-- Live Cloudinary generation: pending credentials and Image Generation add-on access.
-- Baseline benchmark: pending implementation.
+- Reference asset checkpoint: all ten public PNG references are bound from authenticated Admin API readback; repeatable byte fingerprints are recorded in `contentSha256`. Live generation has not been run.
+- Live Cloudinary generation: pending Image Generation and analysis add-on confirmation and a guarded run entrypoint, not pending reference provisioning or local credentials.
+- Baseline benchmark: runner implemented; live execution and measured results remain pending.
 
 ## Cloudinary server foundation
 
@@ -48,14 +50,14 @@ This file records implementation decisions and verification evidence while the d
 
 - Added strict request, async-task, response, and error contracts for Cloudinary Image Generation API v1.4.0.
 - Updated all 50 committed prompts to address managed reference image `[1]` explicitly and bumped the pre-run dataset version to `2026-10-07.2`.
-- Added an environment-independent reference manifest that retains Cloudinary `asset_id`, public ID, version, ETag, dimensions, format, and byte size. It is intentionally empty until real authenticated assets are available.
+- Added a reference-manifest contract that retains Cloudinary `asset_id`, public ID, version, dimensions, format, and byte size. At this checkpoint its bindings were intentionally empty; the reference asset checkpoint below populates real environment-specific identities and uses `contentSha256` instead of ETag.
 - Added deterministic, separate managed output targets for baseline and candidate variants.
 - Added a server-only Basic-auth adapter that starts asynchronous `image_to_image` jobs and polls task IDs with bounded timeouts and no HTTP caching.
 - Treats a timed-out POST as an unknown outcome rather than retrying a possibly accepted and billed generation. Task polling remains safely retryable.
 - Added normalized provenance for dataset, prompt, reference snapshot, requested configuration, resolved model, managed output, quota, notices, and timing.
 - Added an authenticated Admin API readback that requires the persisted asset identity and version to match the generation provenance.
 - Never serializes the Cloudinary API key, secret, raw error message, or response body.
-- Live generation remains pending Image Generation add-on access and ten real reference assets; no fake identities or benchmark outputs were added.
+- At this checkpoint, live generation was pending Image Generation add-on access and ten real reference assets; no fake identities or benchmark outputs were added. Reference provisioning is now complete, but live generation remains unverified.
 
 ## Structured visual scoring
 
@@ -75,7 +77,7 @@ This file records implementation decisions and verification evidence while the d
 - Replaced the landing-only workflow cards with a focused, responsive case-inspection workbench.
 - Added product and prompt-family selectors covering all 50 committed cases. The selected pair is reflected in URL query parameters so a case can be refreshed, linked, and revisited with browser history.
 - Exposed only committed evidence: prompt version, requested output size, exact expected text, required and forbidden attributes, reference key, and all five decision thresholds.
-- Added a truthful readiness rail. It distinguishes locally present credentials from a live connection check, reports zero of ten references bound, and leaves Image Generation, AI Vision, and Image Quality Analysis access unverified.
+- Added a truthful readiness rail. It distinguishes locally present credentials from a live connection check. At this checkpoint it reported zero of ten references bound; the reference asset checkpoint below changes coverage to ten of ten while add-on access remains unverified.
 - Kept the one-case smoke-run control disabled with visible blocker reasons. Inspecting cases is testable now; no paid request can run until references, add-ons, and the runner are ready.
 - Added a client-safe view-model builder and tests so the browser receives no credentials or provider response internals.
 
@@ -88,3 +90,15 @@ This file records implementation decisions and verification evidence while the d
 - Reads each completed managed asset back by immutable identity before scoring it.
 - Aggregates decision counts, paired completion, regression case IDs, and per-dimension score and pass-rate deltas. Missing variants count against pass rate and do not enter numeric averages.
 - The server adapter is implemented but no public run endpoint or persistence layer is enabled yet. Tests use mocked provider responses; no live generation result or benchmark number is claimed.
+
+## Provisioned synthetic reference assets
+
+- Added the reusable `pnpm cloudinary:references` command and fixed SVG designs for all ten fictional products. Cloudinary stores them as 1024 × 1024 public PNG references under `visual-evals/references/<product-id>-v1` public IDs.
+- The images are synthetic illustrations, not photographs or AI-generated baseline and candidate outputs. Each carries its precommitted `EVAL-01` through `EVAL-10` text label.
+- Used `overwrite: false` and authenticated Admin API readback to confirm persisted `dataset_id`, `dataset_version`, `reference_key`, and `expected_text` context, public ID, resource and delivery types, format, and dimensions.
+- Populated `src/data/reference-assets.generated.json` with all ten immutable asset IDs, public IDs, versions, dimensions, byte counts, and `contentSha256` hashes calculated from delivered PNG bytes. The fingerprint field is not a Cloudinary ETag.
+- Provisioning reuses matching assets, preserves the manifest timestamp when unchanged, and rejects missing or changed previously bound identities, versions, or byte fingerprints. It writes the manifest only after the full reference set passes.
+- Added server-side reference preflight by immutable asset ID before generation. It validates dataset and reference context, identity, version, media properties, versioned HTTPS delivery, byte count, and content SHA-256 fingerprint before paid requests can start.
+- Added versioned Cloudinary reference previews to the case workbench and updated coverage to ten of ten. The preview is labeled as a fixed synthetic reference and includes descriptive alt text.
+- Public PNG delivery is deliberate for this non-confidential fictional dataset. The script requests `X-Robots-Tag: noindex, nofollow`; that header does not make the media private.
+- Reference provisioning does not confirm Image Generation, AI Vision, or Image Quality Analysis entitlement. The smoke-run control remains locked, the dataset remains `draft`, and no live generation or analysis scores have been recorded.

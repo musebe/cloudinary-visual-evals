@@ -10,7 +10,10 @@ import { CloudinaryGenerationError } from "@/lib/cloudinary/image-generation-htt
 import { defineReferenceManifest } from "@/lib/cloudinary/reference-manifest";
 
 import { scoreDimensions } from "./contracts";
-import { defineExperimentPlan } from "./experiment-contracts";
+import {
+  defineExperimentPlan,
+  type ExperimentProgressEvent,
+} from "./experiment-contracts";
 import {
   runExperiment,
   type ExperimentRunnerDependencies,
@@ -23,7 +26,7 @@ const references = defineReferenceManifest({
     {
       assetId: "reference0123456789abcdef0123456789",
       bytes: 250_000,
-      etag: "abcdef0123456789abcdef0123456789",
+      contentSha256: "a".repeat(64),
       format: "png",
       height: 1024,
       key: evaluationCase.referenceAssetKey,
@@ -265,6 +268,14 @@ describe("experiment runner", () => {
     expect(record.cases[0].variants[0]).toMatchObject({
       failure: {
         code: "request_timeout",
+        generation: {
+          job: startGeneration.mock.calls[0][0],
+          lastStatus: "unknown",
+          requestId: null,
+          submittedAt: expect.any(String),
+          targetPublicId: `visual-evals/${plan.id}/${evaluationCase.id}/baseline`,
+          taskId: null,
+        },
         outcomeUnknown: true,
         phase: "starting_generation",
         retryable: false,
@@ -275,6 +286,225 @@ describe("experiment runner", () => {
     expect(record.cases[0].variants[1].status).toBe("complete");
     expect(record.aggregate.pairedCompleteCount).toBe(0);
     expect(record.aggregate.variants.baseline.failed).toBe(1);
+  });
+
+  it("retains accepted jobs when polling ends with generation still processing", async () => {
+    const { dependencies, getGenerationTask, startGeneration } =
+      createDependencies();
+    getGenerationTask.mockImplementation(async (taskId) => ({
+      data: { status: "processing", task_id: taskId },
+      request_id: `poll-${taskId}`,
+    }));
+
+    const record = await runExperiment({
+      dataset: productImagesV1,
+      dependencies,
+      options: { maxPollAttempts: 1, pollIntervalMs: 0 },
+      plan,
+      projectFolder: "visual-evals",
+      references,
+    });
+
+    expect(startGeneration).toHaveBeenCalledTimes(2);
+    expect(getGenerationTask).toHaveBeenCalledTimes(2);
+    expect(record.cases[0].variants[0]).toMatchObject({
+      failure: {
+        code: "generation_poll_limit_reached",
+        generation: {
+          job: startGeneration.mock.calls[0][0],
+          lastStatus: "processing",
+          requestId: "start-abc123",
+          submittedAt: expect.any(String),
+          targetPublicId: `visual-evals/${plan.id}/${evaluationCase.id}/baseline`,
+          taskId: "abc123",
+        },
+        outcomeUnknown: true,
+        phase: "waiting_generation",
+        requestId: "start-abc123",
+        retryable: false,
+      },
+      status: "failed",
+    });
+    expect(record.cases[0].variants[1]).toMatchObject({
+      failure: {
+        generation: { taskId: "def456" },
+        outcomeUnknown: true,
+        retryable: false,
+      },
+      status: "failed",
+    });
+    expect(dependencies.readManagedAsset).not.toHaveBeenCalled();
+    expect(dependencies.scoreCase).not.toHaveBeenCalled();
+  });
+
+  it("retains the accepted task after exhausting safe poll retries", async () => {
+    const { dependencies, getGenerationTask, startGeneration } =
+      createDependencies();
+    getGenerationTask.mockRejectedValue(
+      new CloudinaryGenerationError({
+        code: "network_error",
+        operation: "poll",
+        outcomeUnknown: false,
+        requestId: "failed-poll-request",
+        retryable: true,
+      }),
+    );
+
+    const record = await runExperiment({
+      dataset: productImagesV1,
+      dependencies,
+      options: {
+        maxPollAttempts: 1,
+        maxPollRetries: 1,
+        pollIntervalMs: 0,
+        retryBaseDelayMs: 0,
+      },
+      plan,
+      projectFolder: "visual-evals",
+      references,
+    });
+
+    expect(startGeneration).toHaveBeenCalledTimes(2);
+    expect(getGenerationTask).toHaveBeenCalledTimes(4);
+    expect(record.cases[0].variants[0]).toMatchObject({
+      failure: {
+        code: "network_error",
+        generation: {
+          job: startGeneration.mock.calls[0][0],
+          lastStatus: "pending",
+          requestId: "start-abc123",
+          taskId: "abc123",
+        },
+        outcomeUnknown: true,
+        phase: "waiting_generation",
+        requestId: "failed-poll-request",
+        retryable: false,
+      },
+      status: "failed",
+    });
+  });
+
+  it("distinguishes a known failed task from an unresolved generation", async () => {
+    const { dependencies, getGenerationTask } = createDependencies();
+    getGenerationTask.mockImplementation(async (taskId) => ({
+      data: { status: "failed", task_id: taskId },
+      request_id: `poll-${taskId}`,
+    }));
+
+    const record = await runExperiment({
+      dataset: productImagesV1,
+      dependencies,
+      options: { maxPollAttempts: 1, pollIntervalMs: 0 },
+      plan,
+      projectFolder: "visual-evals",
+      references,
+    });
+
+    expect(record.cases[0].variants[0]).toMatchObject({
+      failure: {
+        code: "generation_task_failed",
+        generation: { lastStatus: "failed", taskId: "abc123" },
+        outcomeUnknown: false,
+        retryable: false,
+      },
+      status: "failed",
+    });
+  });
+
+  it("retains completed generation identity when asset verification fails", async () => {
+    const { dependencies, startGeneration } = createDependencies();
+    vi.mocked(dependencies.readManagedAsset).mockImplementation(
+      async (provenance) => {
+        if (provenance.variant === "baseline") {
+          throw new Error("Sensitive provider diagnostic.");
+        }
+
+        return {};
+      },
+    );
+
+    const record = await runExperiment({
+      dataset: productImagesV1,
+      dependencies,
+      options: { pollIntervalMs: 0, retryBaseDelayMs: 0 },
+      plan,
+      projectFolder: "visual-evals",
+      references,
+    });
+
+    expect(startGeneration).toHaveBeenCalledTimes(2);
+    expect(record.cases[0].variants[0]).toMatchObject({
+      failure: {
+        code: "unexpected_runner_error",
+        generation: {
+          job: startGeneration.mock.calls[0][0],
+          lastStatus: "completed",
+          requestId: "start-abc123",
+          taskId: "abc123",
+        },
+        phase: "verifying_asset",
+        retryable: false,
+      },
+      status: "failed",
+    });
+    expect(JSON.stringify(record)).not.toContain("Sensitive provider diagnostic");
+    expect(record.cases[0].variants[1].status).toBe("complete");
+    expect(dependencies.scoreCase).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["throw", "reject"])(
+    "keeps completed provider results when a progress observer would %s",
+    async (behavior) => {
+      const { dependencies, startGeneration } = createDependencies();
+      const progress = vi.fn(() => {
+        if (behavior === "throw") throw new Error("Observer disconnected.");
+        return Promise.reject(new Error("Observer disconnected."));
+      });
+
+      const record = await runExperiment({
+        dataset: productImagesV1,
+        dependencies,
+        onProgress: progress,
+        options: { pollIntervalMs: 0, retryBaseDelayMs: 0 },
+        plan,
+        projectFolder: "visual-evals",
+        references,
+      });
+
+      expect(startGeneration).toHaveBeenCalledTimes(2);
+      expect(progress).toHaveBeenCalled();
+      expect(record.cases[0].variants.map((variant) => variant.status)).toEqual([
+        "complete",
+        "complete",
+      ]);
+      expect(record.aggregate.pairedCompleteCount).toBe(1);
+    },
+  );
+
+  it("preserves provider failure and continues when its failure observer rejects", async () => {
+    const { dependencies, startGeneration } = createDependencies({
+      failBaselineStart: true,
+    });
+    const progress = vi.fn(async (event: ExperimentProgressEvent) => {
+      if (event.phase === "failed") throw new Error("Observer disconnected.");
+    });
+
+    const record = await runExperiment({
+      dataset: productImagesV1,
+      dependencies,
+      onProgress: progress,
+      options: { pollIntervalMs: 0, retryBaseDelayMs: 0 },
+      plan,
+      projectFolder: "visual-evals",
+      references,
+    });
+
+    expect(startGeneration).toHaveBeenCalledTimes(2);
+    expect(record.cases[0].variants[0]).toMatchObject({
+      failure: { code: "request_timeout", outcomeUnknown: true },
+      status: "failed",
+    });
+    expect(record.cases[0].variants[1].status).toBe("complete");
   });
 
   it("rejects missing references before making a paid request", async () => {

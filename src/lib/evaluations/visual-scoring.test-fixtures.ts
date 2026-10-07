@@ -39,7 +39,7 @@ export function createTestGenerationProvenance(
     quota: null,
     reference: {
       assetId: "0123456789abcdef0123456789abcdef",
-      etag: "abcdef0123456789abcdef0123456789",
+      contentSha256: "a".repeat(64),
       key: evaluationCase.referenceAssetKey,
       publicId: `visual-evals/references/${evaluationCase.productId}`,
       version: 1_800_000_000,

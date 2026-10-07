@@ -275,7 +275,7 @@ export interface CompletedGenerationProvenance {
   quota: z.infer<typeof addonQuotaSchema> | null;
   reference: {
     assetId: string;
-    etag: string;
+    contentSha256: string;
     key: string;
     publicId: string;
     version: number;
@@ -439,7 +439,7 @@ export function completeGenerationProvenance(
     quota,
     reference: {
       assetId: input.job.reference.assetId,
-      etag: input.job.reference.etag,
+      contentSha256: input.job.reference.contentSha256,
       key: input.job.reference.key,
       publicId: input.job.reference.publicId,
       version: input.job.reference.version,

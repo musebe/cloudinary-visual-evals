@@ -1,10 +1,13 @@
 import {
   ActivityIcon,
   ArrowRightIcon,
+  CheckCircle2Icon,
   ImagesIcon,
   ScanSearchIcon,
   ShieldCheckIcon,
 } from "lucide-react";
+import { io } from "next/cache";
+import { Suspense } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { productImagesV1Summary } from "@/data/product-images-v1";
+import { inspectCloudinaryEnvironment } from "@/lib/config/cloudinary-env";
 
 const workflow = [
   {
@@ -41,7 +45,51 @@ const workflow = [
   },
 ] as const;
 
+async function getCloudinaryConfigured() {
+  await io();
+
+  return inspectCloudinaryEnvironment(process.env).configured;
+}
+
+async function CloudinaryStatusBadge() {
+  const configured = await getCloudinaryConfigured();
+
+  return (
+    <Badge variant="secondary">
+      Dataset ready · Cloudinary {configured ? "configured" : "pending"}
+    </Badge>
+  );
+}
+
+async function CloudinaryConnectionState() {
+  const configured = await getCloudinaryConfigured();
+
+  if (!configured) {
+    return (
+      <Button className="w-fit" disabled>
+        Connect Cloudinary to continue
+        <ArrowRightIcon data-icon="inline-end" />
+      </Button>
+    );
+  }
+
+  return (
+    <div
+      className="flex w-fit flex-wrap items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm"
+      role="status"
+    >
+      <CheckCircle2Icon
+        className="size-4 text-emerald-600"
+        aria-hidden="true"
+      />
+      <span className="font-medium">Cloudinary configured</span>
+      <span className="text-muted-foreground">Ready for reference assets</span>
+    </div>
+  );
+}
+
 export default function Home() {
+
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-10 px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -59,7 +107,15 @@ export default function Home() {
             </p>
           </div>
         </div>
-        <Badge variant="secondary">Dataset ready · Cloudinary pending</Badge>
+        <Suspense
+          fallback={
+            <Badge variant="secondary">
+              Dataset ready · Checking Cloudinary
+            </Badge>
+          }
+        >
+          <CloudinaryStatusBadge />
+        </Suspense>
       </header>
 
       <section className="grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
@@ -77,10 +133,15 @@ export default function Home() {
               results to review.
             </p>
           </div>
-          <Button className="w-fit" disabled>
-            Connect Cloudinary to continue
-            <ArrowRightIcon data-icon="inline-end" />
-          </Button>
+          <Suspense
+            fallback={
+              <Button className="w-fit" disabled>
+                Checking Cloudinary
+              </Button>
+            }
+          >
+            <CloudinaryConnectionState />
+          </Suspense>
         </div>
 
         <Card>

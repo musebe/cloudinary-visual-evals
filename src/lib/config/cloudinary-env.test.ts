@@ -16,6 +16,7 @@ describe("Cloudinary environment", () => {
     expect(parseCloudinaryEnvironment(validEnvironment)).toEqual({
       ...validEnvironment,
       CLOUDINARY_ADMIN_API_TIMEOUT_MS: 5_000,
+      CLOUDINARY_IMAGE_GENERATION_TIMEOUT_MS: 60_000,
       CLOUDINARY_PROJECT_FOLDER: "visual-evals",
     });
   });

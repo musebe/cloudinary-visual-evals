@@ -32,6 +32,7 @@ describe("product-images-v1", () => {
       expect(evaluationCase.referenceAssetKey).toBe(product?.referenceAssetKey);
       expect(evaluationCase.expected.exactText).toContain(product?.expectedText);
       expect(evaluationCase.prompt).toContain(product?.expectedText);
+      expect(evaluationCase.prompt).toContain("[1]");
     }
   });
 

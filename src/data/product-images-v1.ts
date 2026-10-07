@@ -160,7 +160,7 @@ const promptFamilies = [
     ],
     forbiddenAttributes: ["human hands", "decorative props"],
     buildPrompt: (product) =>
-      `Using the provided reference image, create a centered studio packshot of the ${product.name}. Preserve its exact product identity and print only “${product.expectedText}” exactly as shown. Show the entire product on a seamless white background with a soft grounded shadow.`,
+      `Using reference image [1], create a centered studio packshot of the ${product.name}. Preserve its exact product identity and print only “${product.expectedText}” exactly as shown. Show the entire product on a seamless white background with a soft grounded shadow.`,
   },
   {
     id: "lifestyle_scene",
@@ -173,7 +173,7 @@ const promptFamilies = [
     ],
     forbiddenAttributes: ["promotional headline", "price badge"],
     buildPrompt: (product) =>
-      `Using the provided reference image, place the ${product.name} ${product.lifestyleSetting}. Preserve every defining product detail and keep “${product.expectedText}” unchanged and legible. Use restrained commercial photography with no promotional copy.`,
+      `Using reference image [1], place the ${product.name} ${product.lifestyleSetting}. Preserve every defining product detail and keep “${product.expectedText}” unchanged and legible. Use restrained commercial photography with no promotional copy.`,
   },
   {
     id: "label_closeup",
@@ -186,7 +186,7 @@ const promptFamilies = [
     ],
     forbiddenAttributes: ["invented fine print", "cropped expected text"],
     buildPrompt: (product) =>
-      `Create a precise close-up of the label area on the referenced ${product.name}. The only visible text must be “${product.expectedText}”, spelled exactly with the hyphen and digits intact. Preserve the original materials, colors, and proportions.`,
+      `Create a precise close-up of the label area on the ${product.name} in reference image [1]. The only visible text must be “${product.expectedText}”, spelled exactly with the hyphen and digits intact. Preserve the original materials, colors, and proportions.`,
   },
   {
     id: "multi_angle_layout",
@@ -199,7 +199,7 @@ const promptFamilies = [
     ],
     forbiddenAttributes: ["fourth product view", "mixed product variants"],
     buildPrompt: (product) =>
-      `Using the same referenced ${product.name}, create one clean comparison board with exactly three views: front, side, and three-quarter. Keep all colors, materials, proportions, and the text “${product.expectedText}” consistent. Use a light grey background and no captions.`,
+      `Using the ${product.name} in reference image [1], create one clean comparison board with exactly three views: front, side, and three-quarter. Keep all colors, materials, proportions, and the text “${product.expectedText}” consistent. Use a light grey background and no captions.`,
   },
   {
     id: "campaign_banner",
@@ -212,7 +212,7 @@ const promptFamilies = [
     ],
     forbiddenAttributes: ["call-to-action button", "marketing headline"],
     buildPrompt: (product) =>
-      `Create a 16:9 campaign image from the referenced ${product.name}. Place the complete product in the right third, preserve “${product.expectedText}” exactly, and leave the left half as calm negative space. Do not add a headline, button, price, or extra logo.`,
+      `Create a 16:9 campaign image from the ${product.name} in reference image [1]. Place the complete product in the right third, preserve “${product.expectedText}” exactly, and leave the left half as calm negative space. Do not add a headline, button, price, or extra logo.`,
   },
 ] satisfies PromptFamilyDefinition[];
 
@@ -246,7 +246,7 @@ function createCases() {
 export const productImagesV1 = defineEvaluationDataset({
   schemaVersion: "1.0",
   id: "product-images-v1",
-  version: "2026-10-07.1",
+  version: "2026-10-07.2",
   policyVersion: "visual-evals-1-0",
   status: "draft",
   labelProtocol: "human-authored-before-generation",

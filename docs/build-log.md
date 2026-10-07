@@ -16,6 +16,7 @@ This file records implementation decisions and verification evidence while the d
 - Foundation checks: passed ESLint, TypeScript, the configured Vitest runner, and the Next.js production build on October 7, 2026.
 - Cloudinary foundation: passed ESLint, TypeScript, six environment and health tests, and a Next.js production build on October 7, 2026.
 - Dataset and policy checkpoint: passed ESLint, TypeScript, 17 tests across four files, and a Next.js production build on October 7, 2026.
+- Managed generation checkpoint: passed ESLint, TypeScript, 34 tests across eight files, and a Next.js production build on October 7, 2026.
 - `GET /api/health`: verified as an uncached dynamic route; it returned the expected HTTP 503 and a secret-free JSON body while local credentials were absent.
 - Authenticated Cloudinary ping: pending a dedicated API key and secret in `.env.local`.
 - Domain tests: begin with the versioned dataset and evaluation-policy checkpoint.
@@ -39,3 +40,16 @@ This file records implementation decisions and verification evidence while the d
 - Added strict Zod contracts that reject unknown output fields, duplicate identities, unknown products, mismatched reference keys, repeated dimensions, and invalid thresholds.
 - Added a fail-closed policy with versioned thresholds and explicit hard-violation codes. One failed dimension cannot be hidden by a high average; missing or incomplete evidence routes to review.
 - No generation scores or benchmark results have been recorded yet.
+
+## Managed baseline and candidate generation
+
+- Added strict request, async-task, response, and error contracts for Cloudinary Image Generation API v1.4.0.
+- Updated all 50 committed prompts to address managed reference image `[1]` explicitly and bumped the pre-run dataset version to `2026-10-07.2`.
+- Added an environment-independent reference manifest that retains Cloudinary `asset_id`, public ID, version, ETag, dimensions, format, and byte size. It is intentionally empty until real authenticated assets are available.
+- Added deterministic, separate managed output targets for baseline and candidate variants.
+- Added a server-only Basic-auth adapter that starts asynchronous `image_to_image` jobs and polls task IDs with bounded timeouts and no HTTP caching.
+- Treats a timed-out POST as an unknown outcome rather than retrying a possibly accepted and billed generation. Task polling remains safely retryable.
+- Added normalized provenance for dataset, prompt, reference snapshot, requested configuration, resolved model, managed output, quota, notices, and timing.
+- Added an authenticated Admin API readback that requires the persisted asset identity and version to match the generation provenance.
+- Never serializes the Cloudinary API key, secret, raw error message, or response body.
+- Live generation remains pending credentials, Image Generation add-on access, and ten real reference assets; no fake identities or benchmark outputs were added.

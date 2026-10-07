@@ -26,6 +26,12 @@ export const cloudinaryEnvironmentSchema = z.object({
     .min(1_000)
     .max(30_000)
     .default(5_000),
+  CLOUDINARY_IMAGE_GENERATION_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(5_000)
+    .max(120_000)
+    .default(60_000),
 });
 
 export type CloudinaryEnvironment = z.infer<

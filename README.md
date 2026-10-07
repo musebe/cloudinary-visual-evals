@@ -6,12 +6,13 @@ The application will keep prompts, model configuration, references, managed asse
 
 ## Current status
 
-The foundation is complete. The interface shows the planned evaluation loop, while generation and scoring remain disabled until their contracts and tests are implemented.
+The foundation, 50-case dataset, fail-closed decision policy, and asynchronous Cloudinary generation adapter are complete. Live generation remains disabled until real reference assets and Cloudinary credentials are bound; no benchmark scores are mocked.
 
 - [Build brief](./docs/build-brief.md)
 - [Build log](./docs/build-log.md)
 - [Cloudinary setup](./docs/cloudinary-setup.md)
 - [Evaluation dataset](./docs/evaluation-dataset.md)
+- [Generation pipeline](./docs/generation-pipeline.md)
 
 ## Stack
 

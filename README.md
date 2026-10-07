@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cloudinary Visual Evals Lab
 
-## Getting Started
+A focused Next.js workbench for comparing baseline and candidate AI-generated product images with Cloudinary-backed evidence.
 
-First, run the development server:
+The application will keep prompts, model configuration, references, managed asset identities, scores, and review decisions traceable. It is an evaluation demo, not a claim that automated scoring guarantees image correctness or safety.
+
+## Current status
+
+The foundation is complete. The interface shows the planned evaluation loop, while generation and scoring remain disabled until their contracts and tests are implemented.
+
+- [Build brief](./docs/build-brief.md)
+- [Build log](./docs/build-log.md)
+
+## Stack
+
+- Next.js 16.4 and React 19.3
+- TypeScript and Tailwind CSS 4
+- shadcn components
+- `next-cloudinary` and the Cloudinary Node.js SDK
+- Zod and Vitest
+
+## Local setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+cp .env.example .env.local
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Add your Cloudinary cloud name, API key, and API secret to `.env.local`. Keep the API secret server-only and never prefix it with `NEXT_PUBLIC_`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Validation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
 
-## Learn More
+Run all checks with `pnpm check`.
 
-To learn more about Next.js, take a look at the following resources:
+## Documentation rule
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Record each implemented stage and its verification evidence in `docs/build-log.md`. The later tutorial should describe only behavior that exists in the repository and has been tested.

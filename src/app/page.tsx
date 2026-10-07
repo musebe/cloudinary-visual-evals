@@ -1,69 +1,143 @@
-import Image from "next/image";
+import {
+  ActivityIcon,
+  ArrowRightIcon,
+  ImagesIcon,
+  ScanSearchIcon,
+  ShieldCheckIcon,
+} from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+
+const workflow = [
+  {
+    title: "Define",
+    description: "Lock the cases, prompts, references, and pass criteria.",
+    icon: ImagesIcon,
+  },
+  {
+    title: "Generate",
+    description: "Run baseline and candidate configurations through Cloudinary.",
+    icon: ActivityIcon,
+  },
+  {
+    title: "Score",
+    description: "Measure adherence, fidelity, quality, text, and safety.",
+    icon: ScanSearchIcon,
+  },
+  {
+    title: "Decide",
+    description: "Expose regressions and keep uncertain cases in human review.",
+    icon: ShieldCheckIcon,
+  },
+] as const;
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-10 px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div
+            className="flex size-9 items-center justify-center rounded-lg border bg-card"
+            aria-hidden="true"
+          >
+            <ActivityIcon className="size-4" />
+          </div>
+          <div>
+            <p className="font-medium">Visual Evals Lab</p>
+            <p className="text-sm text-muted-foreground">
+              Cloudinary × Next.js
+            </p>
+          </div>
+        </div>
+        <Badge variant="secondary">Foundation · in progress</Badge>
+      </header>
+
+      <section className="grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="flex flex-col gap-5">
+          <Badge variant="outline" className="w-fit">
+            AI image regression testing
+          </Badge>
+          <div className="flex max-w-3xl flex-col gap-4">
+            <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
+              Catch visual regressions before generated images ship.
+            </h1>
+            <p className="max-w-2xl text-pretty text-base leading-7 text-muted-foreground sm:text-lg">
+              Run the same product-image cases against a baseline and a
+              candidate, inspect Cloudinary-backed evidence, and send uncertain
+              results to review.
+            </p>
+          </div>
+          <Button className="w-fit" disabled>
+            Configure first experiment
+            <ArrowRightIcon data-icon="inline-end" />
+          </Button>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardDescription>Current experiment</CardDescription>
+            <CardTitle>No run yet</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-4 text-sm">
+              <span className="text-muted-foreground">Dataset</span>
+              <span className="font-medium">50 planned cases</span>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between gap-4 text-sm">
+              <span className="text-muted-foreground">Comparison</span>
+              <span className="font-medium">Baseline vs candidate</span>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between gap-4 text-sm">
+              <span className="text-muted-foreground">Evidence</span>
+              <span className="font-medium">Cloudinary readback</span>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="flex flex-col gap-4" aria-labelledby="workflow-title">
+        <div className="flex flex-col gap-1">
+          <h2
+            id="workflow-title"
+            className="text-2xl font-semibold tracking-tight"
+          >
+            One traceable evaluation loop
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            The interface will stay focused on the experiment and its evidence.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {workflow.map(({ title, description, icon: Icon }, index) => (
+            <Card key={title}>
+              <CardHeader>
+                <div className="flex items-center justify-between gap-4">
+                  <Icon
+                    className="size-5 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <span className="text-sm tabular-nums text-muted-foreground">
+                    0{index + 1}
+                  </span>
+                </div>
+                <CardTitle>{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
+              </CardHeader>
+            </Card>
+          ))}
         </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }

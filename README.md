@@ -6,7 +6,7 @@ The application will keep prompts, model configuration, references, managed asse
 
 ## Current status
 
-The foundation, 50-case dataset, asynchronous Cloudinary generation adapter, and fail-closed structured scoring engine are complete. Live experiments remain disabled until real reference assets and the required Cloudinary generation and analysis add-ons are confirmed; no benchmark scores are mocked.
+The foundation, 50-case dataset, asynchronous Cloudinary generation adapter, fail-closed structured scoring engine, and interactive case-inspection workbench are complete. Live experiments remain disabled until real reference assets and the required Cloudinary generation and analysis add-ons are confirmed; no benchmark scores are mocked.
 
 - [Build brief](./docs/build-brief.md)
 - [Build log](./docs/build-log.md)
@@ -40,6 +40,12 @@ pnpm cloudinary:verify
 ```
 
 The public `GET /api/health` route reports configuration readiness without making a rate-limited Admin API request or returning credential values.
+
+## What you can test now
+
+Open `http://localhost:3000`, then change the product and prompt-family selectors. Each combination should update the URL and show its committed prompt, exact-text label, required and forbidden evidence, output size, reference key, and decision thresholds.
+
+The readiness rail should show credentials as present after `.env.local` is configured, while references and add-on access remain incomplete. The smoke-run button is intentionally disabled until those prerequisites and the experiment runner are ready.
 
 ## Validation
 

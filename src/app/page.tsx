@@ -1,98 +1,47 @@
-import {
-  ActivityIcon,
-  ArrowRightIcon,
-  CheckCircle2Icon,
-  ImagesIcon,
-  ScanSearchIcon,
-  ShieldCheckIcon,
-} from "lucide-react";
+import { ActivityIcon } from "lucide-react";
 import { io } from "next/cache";
 import { Suspense } from "react";
 
+import { EvaluationWorkbench } from "@/components/evaluation-workbench";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { productImagesV1Summary } from "@/data/product-images-v1";
+import { Card, CardContent } from "@/components/ui/card";
+import { productImagesV1 } from "@/data/product-images-v1";
+import { referenceAssets } from "@/data/reference-assets";
 import { inspectCloudinaryEnvironment } from "@/lib/config/cloudinary-env";
+import { buildEvaluationWorkbenchData } from "@/lib/evaluations/workbench";
 
-const workflow = [
-  {
-    title: "Define",
-    description: "Lock the cases, prompts, references, and pass criteria.",
-    icon: ImagesIcon,
-  },
-  {
-    title: "Generate",
-    description: "Run baseline and candidate configurations through Cloudinary.",
-    icon: ActivityIcon,
-  },
-  {
-    title: "Score",
-    description: "Measure adherence, fidelity, quality, text, and safety.",
-    icon: ScanSearchIcon,
-  },
-  {
-    title: "Decide",
-    description: "Expose regressions and keep uncertain cases in human review.",
-    icon: ShieldCheckIcon,
-  },
-] as const;
+const workbenchData = buildEvaluationWorkbenchData(
+  productImagesV1,
+  referenceAssets,
+);
 
-async function getCloudinaryConfigured() {
+async function EvaluationWorkbenchRuntime() {
   await io();
 
-  return inspectCloudinaryEnvironment(process.env).configured;
-}
-
-async function CloudinaryStatusBadge() {
-  const configured = await getCloudinaryConfigured();
-
   return (
-    <Badge variant="secondary">
-      Dataset ready · Cloudinary {configured ? "configured" : "pending"}
-    </Badge>
+    <EvaluationWorkbench
+      cloudinaryConfigured={
+        inspectCloudinaryEnvironment(process.env).configured
+      }
+      data={workbenchData}
+    />
   );
 }
 
-async function CloudinaryConnectionState() {
-  const configured = await getCloudinaryConfigured();
-
-  if (!configured) {
-    return (
-      <Button className="w-fit" disabled>
-        Connect Cloudinary to continue
-        <ArrowRightIcon data-icon="inline-end" />
-      </Button>
-    );
-  }
-
+function EvaluationWorkbenchFallback() {
   return (
-    <div
-      className="flex w-fit flex-wrap items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm"
-      role="status"
-    >
-      <CheckCircle2Icon
-        className="size-4 text-emerald-600"
-        aria-hidden="true"
-      />
-      <span className="font-medium">Cloudinary configured</span>
-      <span className="text-muted-foreground">Ready for reference assets</span>
-    </div>
+    <Card aria-busy="true">
+      <CardContent className="py-8 text-sm text-muted-foreground">
+        Checking local runtime readiness…
+      </CardContent>
+    </Card>
   );
 }
 
 export default function Home() {
-
   return (
-    <main className="mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-10 px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
-      <header className="flex flex-wrap items-center justify-between gap-4">
+    <main className="mx-auto flex min-h-svh w-full max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b pb-5">
         <div className="flex items-center gap-3">
           <div
             className="flex size-9 items-center justify-center rounded-lg border bg-card"
@@ -107,109 +56,29 @@ export default function Home() {
             </p>
           </div>
         </div>
-        <Suspense
-          fallback={
-            <Badge variant="secondary">
-              Dataset ready · Checking Cloudinary
-            </Badge>
-          }
-        >
-          <CloudinaryStatusBadge />
-        </Suspense>
+        <Badge variant="secondary" className="max-w-full">
+          Dataset draft · {workbenchData.references.boundCount}/
+          {workbenchData.references.expectedCount} refs
+        </Badge>
       </header>
 
-      <section className="grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="flex flex-col gap-5">
-          <Badge variant="outline" className="w-fit">
-            AI image regression testing
-          </Badge>
-          <div className="flex max-w-3xl flex-col gap-4">
-            <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Catch visual regressions before generated images ship.
-            </h1>
-            <p className="max-w-2xl text-pretty text-base leading-7 text-muted-foreground sm:text-lg">
-              Run the same product-image cases against a baseline and a
-              candidate, inspect Cloudinary-backed evidence, and send uncertain
-              results to review.
-            </p>
-          </div>
-          <Suspense
-            fallback={
-              <Button className="w-fit" disabled>
-                Checking Cloudinary
-              </Button>
-            }
-          >
-            <CloudinaryConnectionState />
-          </Suspense>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardDescription>Current experiment</CardDescription>
-            <CardTitle>No run yet</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-4 text-sm">
-              <span className="text-muted-foreground">Dataset</span>
-              <span className="font-medium">
-                {productImagesV1Summary.caseCount} validated cases
-              </span>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between gap-4 text-sm">
-              <span className="text-muted-foreground">Coverage</span>
-              <span className="font-medium">
-                {productImagesV1Summary.productCount} products ×{" "}
-                {productImagesV1Summary.promptFamilyCount} prompts
-              </span>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between gap-4 text-sm">
-              <span className="text-muted-foreground">Comparison</span>
-              <span className="font-medium">Baseline vs candidate</span>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between gap-4 text-sm">
-              <span className="text-muted-foreground">Evidence</span>
-              <span className="font-medium">Cloudinary readback</span>
-            </div>
-          </CardContent>
-        </Card>
+      <section className="flex max-w-3xl flex-col gap-3">
+        <Badge variant="outline" className="w-fit">
+          AI image regression testing
+        </Badge>
+        <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+          Inspect the test before you run the model.
+        </h1>
+        <p className="text-pretty text-base leading-7 text-muted-foreground">
+          Review the fixed prompt, product labels, expected text, and pass
+          criteria for every case. Live Cloudinary generation unlocks only when
+          its evidence inputs are complete.
+        </p>
       </section>
 
-      <section className="flex flex-col gap-4" aria-labelledby="workflow-title">
-        <div className="flex flex-col gap-1">
-          <h2
-            id="workflow-title"
-            className="text-2xl font-semibold tracking-tight"
-          >
-            One traceable evaluation loop
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            The interface will stay focused on the experiment and its evidence.
-          </p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {workflow.map(({ title, description, icon: Icon }, index) => (
-            <Card key={title}>
-              <CardHeader>
-                <div className="flex items-center justify-between gap-4">
-                  <Icon
-                    className="size-5 text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                  <span className="text-sm tabular-nums text-muted-foreground">
-                    0{index + 1}
-                  </span>
-                </div>
-                <CardTitle>{title}</CardTitle>
-                <CardDescription>{description}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      </section>
+      <Suspense fallback={<EvaluationWorkbenchFallback />}>
+        <EvaluationWorkbenchRuntime />
+      </Suspense>
     </main>
   );
 }

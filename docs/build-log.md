@@ -18,6 +18,7 @@ This file records implementation decisions and verification evidence while the d
 - Dataset and policy checkpoint: passed ESLint, TypeScript, 17 tests across four files, and a Next.js production build on October 7, 2026.
 - Managed generation checkpoint: passed ESLint, TypeScript, 34 tests across eight files, and a Next.js production build on October 7, 2026.
 - Structured scoring checkpoint: passed ESLint, TypeScript, 56 tests across 11 files, and a Next.js production build on October 7, 2026.
+- Evaluation workbench slice: passed ESLint, TypeScript, 59 tests across 12 files, a Next.js production build, and query-addressable case smoke checks on October 7, 2026.
 - `GET /api/health`: verified as an uncached dynamic route; it returned the expected HTTP 503 and a secret-free JSON body while local credentials were absent.
 - Authenticated Cloudinary ping: connected successfully to the configured product environment on October 7, 2026; the command exposed no credentials.
 - Domain tests: begin with the versioned dataset and evaluation-policy checkpoint.
@@ -67,3 +68,12 @@ This file records implementation decisions and verification evidence while the d
 - Added 22 scoring and transport tests covering pass, fail, review, stale provenance, source mismatches, malformed structured output, invented labels, delivery mismatches, low confidence, safety results, rate limits, timeouts, and response-stream failures.
 - Tests use fixtures and mocked Analyze responses. Live Analyze access, latency, quota behavior, costs, scoring accuracy, and false-positive or false-negative rates have not yet been verified.
 - Reference fidelity currently means comparison with precommitted textual identity labels. Dedicated reference-image comparison and OCR remain possible later extensions, not current claims.
+
+## Evaluation workbench preflight
+
+- Replaced the landing-only workflow cards with a focused, responsive case-inspection workbench.
+- Added product and prompt-family selectors covering all 50 committed cases. The selected pair is reflected in URL query parameters so a case can be refreshed, linked, and revisited with browser history.
+- Exposed only committed evidence: prompt version, requested output size, exact expected text, required and forbidden attributes, reference key, and all five decision thresholds.
+- Added a truthful readiness rail. It distinguishes locally present credentials from a live connection check, reports zero of ten references bound, and leaves Image Generation, AI Vision, and Image Quality Analysis access unverified.
+- Kept the one-case smoke-run control disabled with visible blocker reasons. Inspecting cases is testable now; no paid request can run until references, add-ons, and the runner are ready.
+- Added a client-safe view-model builder and tests so the browser receives no credentials or provider response internals.

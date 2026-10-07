@@ -10,6 +10,7 @@ The foundation is complete. The interface shows the planned evaluation loop, whi
 
 - [Build brief](./docs/build-brief.md)
 - [Build log](./docs/build-log.md)
+- [Cloudinary setup](./docs/cloudinary-setup.md)
 
 ## Stack
 
@@ -28,6 +29,14 @@ pnpm dev
 ```
 
 Add your Cloudinary cloud name, API key, and API secret to `.env.local`. Keep the API secret server-only and never prefix it with `NEXT_PUBLIC_`.
+
+Verify the authenticated connection once after configuring the file:
+
+```bash
+pnpm cloudinary:verify
+```
+
+The public `GET /api/health` route reports configuration readiness without making a rate-limited Admin API request or returning credential values.
 
 ## Validation
 

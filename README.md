@@ -1,78 +1,77 @@
-# Cloudinary Visual Evals Lab
+# Visual Evals Lab
 
-A focused Next.js workbench for comparing baseline and candidate AI-generated product images with Cloudinary-backed evidence.
+Compare product-image prompts before changing your generation pipeline. The app puts baseline and candidate images side by side, with separate checks for product details, readable text, image quality, and safety.
 
-The application will keep prompts, model configuration, references, managed asset identities, scores, and review decisions traceable. It is an evaluation demo, not a claim that automated scoring guarantees image correctness or safety.
+[Live demo](https://cloudinary-visual-evals.vercel.app/) · [Source](https://github.com/musebe/cloudinary-visual-evals)
 
-## Current status
+## Try it
 
-The foundation, 50-case dataset, asynchronous Cloudinary generation adapter, fail-closed structured scoring engine, repeatable experiment runner, and interactive case-inspection workbench are implemented. All ten reference assets are now bound to real Cloudinary images, verified through authenticated Admin API readback, and visible in the workbench.
+Open the demo and select **View demo comparison**. You can inspect both images, read the scoring decisions, and download the result as JSON.
 
-These references are fixed synthetic product illustrations. The local one-case smoke workflow now generates and scores real baseline and candidate assets. A controlled bottle case completed successfully with all three analysis services; the full 50-case benchmark and human-review workflow are still pending.
+The public site shows a recorded Cloudinary experiment. It verifies the managed assets before serving the comparison, with a short cache to limit Admin API requests. It does not generate new images or run paid analysis. The dataset inspector lets you explore 50 labeled cases across ten fictional products; changing those selections does not change the recorded sample.
 
-- [Build brief](./docs/build-brief.md)
-- [Build log](./docs/build-log.md)
-- [Cloudinary setup](./docs/cloudinary-setup.md)
-- [Evaluation dataset](./docs/evaluation-dataset.md)
-- [Generation pipeline](./docs/generation-pipeline.md)
-- [Scoring pipeline](./docs/scoring-pipeline.md)
-- [Experiment runner](./docs/experiment-runner.md)
+## How it works
 
-## Stack
+Cloudinary generates both variants from the same reference image. The baseline uses the saved case prompt; the candidate adds instructions to preserve the product identity and its exact text label. Both use `flux-2-klein-9b-edit`.
 
-- Next.js 16.4 and React 19.3
-- TypeScript and Tailwind CSS 4
-- shadcn components
-- `next-cloudinary` and the Cloudinary Node.js SDK
-- Zod and Vitest
+The server reads each generated asset back through Cloudinary's Admin API, then requests visual, quality, and moderation analysis. Application rules turn that evidence into five dimension scores and a **pass**, **review**, or **fail** decision. Missing evidence goes to review rather than being counted as a pass.
 
-## Local setup
+Each result keeps its dataset version, prompt, model, reference, asset ID, and policy version. Image previews use `next-cloudinary`; scoring uses the original managed asset.
+
+## Run locally
+
+You need Node.js 24 or later, pnpm, and a Cloudinary account with access to Image Generation, AI Vision, and Image Quality Analysis.
 
 ```bash
-cp .env.example .env.local
+git clone https://github.com/musebe/cloudinary-visual-evals.git
+cd cloudinary-visual-evals
 pnpm install
-pnpm dev
+cp .env.example .env.local
 ```
 
-Add your Cloudinary cloud name, API key, and API secret to `.env.local`. Keep the API secret server-only and never prefix it with `NEXT_PUBLIC_`.
+Add your credentials to `.env.local`:
 
-Verify the authenticated connection once after configuring the file:
+```dotenv
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
+Keep the API key and secret server-only. Do not commit `.env.local`.
 
 ```bash
 pnpm cloudinary:verify
+pnpm dev
 ```
 
-Provision or revalidate the ten references in the configured product environment:
+Open [127.0.0.1:3000](http://127.0.0.1:3000). The health endpoint at `/api/health` reports configuration status without returning credentials.
+
+The checked-in asset bindings and recorded comparison belong to the hosted demo's Cloudinary environment. Asset IDs do not transfer between accounts. If you use another environment, prepare its own reference bindings and recorded comparison. The [Cloudinary setup guide](./docs/cloudinary-setup.md) explains the reference checks and required add-ons; `pnpm cloudinary:references` provisions or verifies the reference set without overwriting existing assets.
+
+## Run a new comparison
+
+After configuring your reference assets and checking your add-on quota, add this flag to `.env.local` and restart the server:
+
+```dotenv
+CLOUDINARY_ENABLE_LOCAL_SMOKE=true
+```
+
+Choose a product and prompt family, confirm quota usage, then select **Run one-case smoke test**. One comparison uses two generation requests and up to six analysis calls. Cloudinary credits vary by request; a request is not necessarily one credit.
+
+Runs are limited to three attempts per UTC day, with one active run at a time. **Load last result** restores the latest local record without generating again. Results are saved in the ignored `.visual-evals/` directory.
+
+If a submitted job has an uncertain outcome, its lock remains in place. Inspect the saved task IDs before retrying; refreshing the browser does not cancel a Cloudinary job. See [local comparisons](./docs/local-smoke.md) for recovery details. Paid execution is disabled in production, regardless of the flag.
+
+## Development
+
+Built with Next.js 16.4, React 19.3, TypeScript, Tailwind CSS 4, shadcn, Zod, and Vitest.
 
 ```bash
-pnpm cloudinary:references
+pnpm check
 ```
 
-The command creates missing public PNG references without overwriting existing assets, verifies their persisted context and identity, and writes the environment-specific bindings to [`reference-assets.generated.json`](./src/data/reference-assets.generated.json). Reruns check the recorded identities, versions, and `contentSha256` byte fingerprints. See [Cloudinary setup](./docs/cloudinary-setup.md) before using a different product environment.
+This runs lint, TypeScript checks, tests, and the production build. Individual commands are `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`.
 
-The public `GET /api/health` route reports configuration readiness without making a rate-limited Admin API request or returning credential values.
+The reference images are synthetic illustrations, not product photographs. Scores are automated policy signals, not human approval. The full 50-case benchmark and interactive human-review workflow are not complete, and the recorded sample is not a general accuracy claim.
 
-## What you can test now
-
-Open `http://localhost:3000`, then change the product and prompt-family selectors. Each combination should update the URL and show its committed prompt, exact-text label, required and forbidden evidence, output size, reference key, decision thresholds, and a versioned Cloudinary preview of the selected synthetic reference.
-
-The reference summary should show `10 / 10 bound`. To inspect the latest completed comparison without consuming quota, select **Load last result** in the smoke-test panel.
-
-To generate a new comparison, set `CLOUDINARY_ENABLE_LOCAL_SMOKE=true` in `.env.local` and restart `pnpm dev`. Choose a case, confirm quota usage, and select **Run one-case smoke test**. The server owns both model configurations: the same pinned edit model runs the committed prompt and a candidate text-preservation suffix. Each run submits two generations and up to six analysis requests. Generation credits depend on the model; requests are not equivalent to credits.
-
-The workflow is development-only, bound to the loopback interface, same-origin protected, single-flight, and limited to three attempts per UTC day. Journals live in ignored `.visual-evals/` files. An unresolved accepted job retains its lock and task IDs for reconciliation. Production execution is disabled even if the opt-in flag is set. See [the smoke workflow](./docs/local-smoke.md).
-
-## Validation
-
-```bash
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-```
-
-Run all checks with `pnpm check`.
-
-## Documentation rule
-
-Record each implemented stage and its verification evidence in `docs/build-log.md`. The later tutorial should describe only behavior that exists in the repository and has been tested.
+Further reading: [dataset](./docs/evaluation-dataset.md), [generation](./docs/generation-pipeline.md), [scoring](./docs/scoring-pipeline.md), and [runner](./docs/experiment-runner.md).

@@ -19,6 +19,7 @@ This file records implementation decisions and verification evidence while the d
 - Managed generation checkpoint: passed ESLint, TypeScript, 34 tests across eight files, and a Next.js production build on October 7, 2026.
 - Structured scoring checkpoint: passed ESLint, TypeScript, 56 tests across 11 files, and a Next.js production build on October 7, 2026.
 - Evaluation workbench slice: passed ESLint, TypeScript, 59 tests across 12 files, a Next.js production build, and query-addressable case smoke checks on October 7, 2026.
+- Repeatable experiment runner: passed ESLint, TypeScript, 68 tests across 15 files, and a Next.js production build on October 7, 2026.
 - `GET /api/health`: verified as an uncached dynamic route; it returned the expected HTTP 503 and a secret-free JSON body while local credentials were absent.
 - Authenticated Cloudinary ping: connected successfully to the configured product environment on October 7, 2026; the command exposed no credentials.
 - Domain tests: begin with the versioned dataset and evaluation-policy checkpoint.
@@ -77,3 +78,13 @@ This file records implementation decisions and verification evidence while the d
 - Added a truthful readiness rail. It distinguishes locally present credentials from a live connection check, reports zero of ten references bound, and leaves Image Generation, AI Vision, and Image Quality Analysis access unverified.
 - Kept the one-case smoke-run control disabled with visible blocker reasons. Inspecting cases is testable now; no paid request can run until references, add-ons, and the runner are ready.
 - Added a client-safe view-model builder and tests so the browser receives no credentials or provider response internals.
+
+## Repeatable experiment runner
+
+- Added a versioned experiment plan binding one dataset revision, unique case IDs, and distinct baseline and candidate configurations.
+- Prevalidates the full selected reference set before starting any paid generation request.
+- Executes explicit progress phases for each variant and preserves sanitized failures without preventing the other variant from completing.
+- Never retries a generation start because a timeout can have an unknown, billable outcome. Only retryable task polls with known outcomes receive bounded exponential retries.
+- Reads each completed managed asset back by immutable identity before scoring it.
+- Aggregates decision counts, paired completion, regression case IDs, and per-dimension score and pass-rate deltas. Missing variants count against pass rate and do not enter numeric averages.
+- The server adapter is implemented but no public run endpoint or persistence layer is enabled yet. Tests use mocked provider responses; no live generation result or benchmark number is claimed.

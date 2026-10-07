@@ -6,7 +6,7 @@ The application will keep prompts, model configuration, references, managed asse
 
 ## Current status
 
-The foundation, 50-case dataset, asynchronous Cloudinary generation adapter, fail-closed structured scoring engine, and interactive case-inspection workbench are complete. Live experiments remain disabled until real reference assets and the required Cloudinary generation and analysis add-ons are confirmed; no benchmark scores are mocked.
+The foundation, 50-case dataset, asynchronous Cloudinary generation adapter, fail-closed structured scoring engine, repeatable experiment runner, and interactive case-inspection workbench are complete. Live experiments remain disabled until real reference assets and the required Cloudinary generation and analysis add-ons are confirmed; no benchmark scores are mocked.
 
 - [Build brief](./docs/build-brief.md)
 - [Build log](./docs/build-log.md)
@@ -14,6 +14,7 @@ The foundation, 50-case dataset, asynchronous Cloudinary generation adapter, fai
 - [Evaluation dataset](./docs/evaluation-dataset.md)
 - [Generation pipeline](./docs/generation-pipeline.md)
 - [Scoring pipeline](./docs/scoring-pipeline.md)
+- [Experiment runner](./docs/experiment-runner.md)
 
 ## Stack
 

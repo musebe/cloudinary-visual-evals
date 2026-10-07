@@ -17,8 +17,9 @@ This file records implementation decisions and verification evidence while the d
 - Cloudinary foundation: passed ESLint, TypeScript, six environment and health tests, and a Next.js production build on October 7, 2026.
 - Dataset and policy checkpoint: passed ESLint, TypeScript, 17 tests across four files, and a Next.js production build on October 7, 2026.
 - Managed generation checkpoint: passed ESLint, TypeScript, 34 tests across eight files, and a Next.js production build on October 7, 2026.
+- Structured scoring checkpoint: passed ESLint, TypeScript, 56 tests across 11 files, and a Next.js production build on October 7, 2026.
 - `GET /api/health`: verified as an uncached dynamic route; it returned the expected HTTP 503 and a secret-free JSON body while local credentials were absent.
-- Authenticated Cloudinary ping: pending a dedicated API key and secret in `.env.local`.
+- Authenticated Cloudinary ping: connected successfully to the configured product environment on October 7, 2026; the command exposed no credentials.
 - Domain tests: begin with the versioned dataset and evaluation-policy checkpoint.
 - Live Cloudinary generation: pending credentials and Image Generation add-on access.
 - Baseline benchmark: pending implementation.
@@ -52,4 +53,17 @@ This file records implementation decisions and verification evidence while the d
 - Added normalized provenance for dataset, prompt, reference snapshot, requested configuration, resolved model, managed output, quota, notices, and timing.
 - Added an authenticated Admin API readback that requires the persisted asset identity and version to match the generation provenance.
 - Never serializes the Cloudinary API key, secret, raw error message, or response body.
-- Live generation remains pending credentials, Image Generation add-on access, and ten real reference assets; no fake identities or benchmark outputs were added.
+- Live generation remains pending Image Generation add-on access and ten real reference assets; no fake identities or benchmark outputs were added.
+
+## Structured visual scoring
+
+- Added strict request and response contracts for Cloudinary Analyze API AI Vision General, AI Vision Moderation, and Image Quality Analysis.
+- Bound all analysis to the exact versioned Cloudinary output URL and rejected mismatched returned `data.entity` values.
+- Validated dataset version, case, product, reference key, and generation provenance before starting any paid analysis request.
+- Kept model observations separate from policy authority: AI Vision reports committed labels and uncertainty, while application code calculates deterministic scores and hard violations.
+- Added five fixed safety rejection questions. A `yes` fails; `unknown`, duplicate, missing, or altered questions route to review.
+- Changed aggregate scoring so any missing or incomplete required dimension produces a null aggregate instead of a misleading partial average.
+- Sanitized provider errors while preserving safe request, status, category, retry, and outcome metadata for later audit and retry logic.
+- Added 22 scoring and transport tests covering pass, fail, review, stale provenance, source mismatches, malformed structured output, invented labels, delivery mismatches, low confidence, safety results, rate limits, timeouts, and response-stream failures.
+- Tests use fixtures and mocked Analyze responses. Live Analyze access, latency, quota behavior, costs, scoring accuracy, and false-positive or false-negative rates have not yet been verified.
+- Reference fidelity currently means comparison with precommitted textual identity labels. Dedicated reference-image comparison and OCR remain possible later extensions, not current claims.

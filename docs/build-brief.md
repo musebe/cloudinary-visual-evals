@@ -81,14 +81,14 @@ Do not use filenames or URLs as the only identity. Prefer Cloudinary's immutable
 
 | Dimension | Evidence | Initial decision rule |
 | --- | --- | --- |
-| Prompt adherence | Structured AI Vision response against required and forbidden attributes | Fail on a forbidden attribute or a missing required product attribute |
-| Reference fidelity | Perceptual and semantic comparison to labeled references | Review below the fidelity threshold; fail on product identity drift |
-| Text and logo integrity | OCR plus expected text or mark checks | Fail on missing, altered, or hallucinated required text |
-| Technical quality | Resolution, format, crop safety, blur, noise, and Cloudinary quality evidence | Fail required delivery constraints; review borderline quality |
+| Prompt adherence | Structured AI Vision observations against required and forbidden attributes | Fail on a forbidden attribute or a missing required product attribute |
+| Reference fidelity | Output observations against identity attributes labeled from the reference | Review uncertain identity evidence; fail on product identity drift |
+| Text integrity | AI Vision observed text plus exact expected-text checks | Fail on missing, altered, or forbidden additional text |
+| Technical quality | Dimensions, format, and Cloudinary Image Quality Analysis | Fail required delivery constraints; review low-confidence quality evidence |
 | Safety and policy | Moderation or policy classifier response | Fail hard policy violations; review incomplete analysis |
 | Human preference | Blind baseline-versus-candidate review on disputed cases | Store separately from automated scores and never backfill it automatically |
 
-The aggregate decision is `pass`, `review`, or `fail`. A candidate passes only when every required dimension has complete evidence and meets its threshold.
+The aggregate decision is `pass`, `review`, or `fail`. A candidate passes only when every required dimension has complete evidence and meets its threshold. Checkpoint 5 does not yet perform pixel, perceptual, or embedding comparison with the reference asset; it checks the generated output against precommitted textual identity labels.
 
 ## Benchmark plan
 

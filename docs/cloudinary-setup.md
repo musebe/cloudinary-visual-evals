@@ -38,8 +38,13 @@ It returns HTTP 200 when all required variables are present and HTTP 503 when se
 
 Before implementing live experiments, open **Marketplace → Image Generation**, register the add-on, and confirm the quota for this product environment. Model availability and quota are verified again when the generation checkpoint is implemented.
 
+## Analysis access
+
+The scoring pipeline uses the Public Beta Analyze API. Register **Cloudinary AI Vision** for general and moderation analysis, and **Cloudinary AI Content Analysis** for image-quality analysis. Confirm the quota for both add-ons before running a live smoke case. A successful credential check confirms authentication only; it does not confirm add-on entitlement.
+
 ## References
 
 - [Cloudinary AI agent tools and MCP servers](https://cloudinary.com/documentation/cloudinary_llm_mcp)
 - [Find Cloudinary credentials](https://cloudinary.com/documentation/developer_onboarding_faq_find_credentials)
 - [Cloudinary Image Generation](https://cloudinary.com/documentation/image_generation_addon)
+- [Cloudinary Analyze API](https://cloudinary.com/documentation/analyze_api_guide)

@@ -107,6 +107,7 @@ describe("evaluation policy", () => {
     });
 
     expect(result.decision).toBe("review");
+    expect(result.aggregateScore).toBeNull();
     expect(
       result.dimensions.filter((dimension) => dimension.outcome === "review"),
     ).toHaveLength(2);

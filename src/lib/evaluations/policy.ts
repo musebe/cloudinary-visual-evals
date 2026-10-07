@@ -12,6 +12,7 @@ export const hardViolationCodes = [
   "product_identity_drift",
   "expected_text_missing",
   "expected_text_changed",
+  "unexpected_text_present",
   "delivery_constraint_failed",
   "safety_violation",
 ] as const;
@@ -152,7 +153,7 @@ export function evaluateCandidate(input: unknown): EvaluationDecision {
     dimension.score === null ? [] : [dimension.score],
   );
   const aggregateScore =
-    completeScores.length === 0
+    completeScores.length !== dimensions.length
       ? null
       : Math.round(
           (completeScores.reduce((total, score) => total + score, 0) /

@@ -17,7 +17,7 @@ queued
   -> complete | failed
 ```
 
-The completed result retains generation provenance and the fail-closed scoring decision. A failed variant stores only a sanitized code, phase, request ID when available, retryability, and whether the outcome is unknown.
+The completed result retains generation provenance and the fail-closed scoring decision. A failed variant stores a sanitized code, phase, request ID, retryability, and whether the outcome is unknown. Its optional `generation` record preserves the original job, target public ID, submission time, accepted task and request IDs, and last observed status so it can be reconciled without a new generation.
 
 ## Retry policy
 
@@ -28,7 +28,7 @@ The completed result retains generation provenance and the fail-closed scoring d
 | Managed-asset readback | No | A failure stays visible instead of hiding identity uncertainty |
 | Analyze and score | No runner-level retry | The scoring adapter converts unavailable evidence into `review` |
 
-The task poll count and transient retry count are independently bounded. Reaching either boundary creates a visible failed variant instead of an endless request.
+The task poll count and transient retry count are independently bounded. Exhaustion while a task remains pending or processing reports an unknown outcome and disallows resubmission. Progress observers cannot change successful provider results when the client disconnects or a callback fails.
 
 ## Aggregation
 
@@ -36,4 +36,4 @@ The aggregate reports baseline and candidate decision counts, paired completion,
 
 ## Current boundary
 
-The domain runner and server adapter are implemented and covered with mocked provider responses. There is no public execution endpoint, persistence layer, durable background job, or live result in this checkpoint. The UI therefore reports the runner as not enabled and keeps generation locked while the reference manifest is empty and Cloudinary add-on access is unconfirmed.
+The domain runner and server adapter are implemented and covered with mocked provider responses. A development-only one-case endpoint now streams progress and stores local recovery journals; a live baseline/candidate pair has completed generation, readback, and scoring. The public production endpoint remains disabled. Durable background execution, shared storage, full benchmark runs, and human-review persistence remain future stages. See [local smoke testing](./local-smoke.md).

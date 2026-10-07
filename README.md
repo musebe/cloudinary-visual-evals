@@ -8,7 +8,7 @@ The application will keep prompts, model configuration, references, managed asse
 
 The foundation, 50-case dataset, asynchronous Cloudinary generation adapter, fail-closed structured scoring engine, repeatable experiment runner, and interactive case-inspection workbench are implemented. All ten reference assets are now bound to real Cloudinary images, verified through authenticated Admin API readback, and visible in the workbench.
 
-These references are fixed synthetic product illustrations, not product photographs or generated benchmark outputs. Live experiments remain disabled until the required generation and analysis add-ons are confirmed and a run endpoint is enabled. No live generation scores or benchmark results have been recorded.
+These references are fixed synthetic product illustrations. The local one-case smoke workflow now generates and scores real baseline and candidate assets. A controlled bottle case completed successfully with all three analysis services; the full 50-case benchmark and human-review workflow are still pending.
 
 - [Build brief](./docs/build-brief.md)
 - [Build log](./docs/build-log.md)
@@ -56,7 +56,11 @@ The public `GET /api/health` route reports configuration readiness without makin
 
 Open `http://localhost:3000`, then change the product and prompt-family selectors. Each combination should update the URL and show its committed prompt, exact-text label, required and forbidden evidence, output size, reference key, decision thresholds, and a versioned Cloudinary preview of the selected synthetic reference.
 
-The reference summary should show `10 / 10 bound`, and the selected reference should show **Bound**. Credentials show **Present** after `.env.local` is configured, but add-on access remains **Not verified**. The smoke-run button is intentionally disabled because add-on access and the browser-facing runner are not yet enabled. These readiness labels are not live benchmark results.
+The reference summary should show `10 / 10 bound`. To inspect the latest completed comparison without consuming quota, select **Load last result** in the smoke-test panel.
+
+To generate a new comparison, set `CLOUDINARY_ENABLE_LOCAL_SMOKE=true` in `.env.local` and restart `pnpm dev`. Choose a case, confirm quota usage, and select **Run one-case smoke test**. The server owns both model configurations: the same pinned edit model runs the committed prompt and a candidate text-preservation suffix. Each run submits two generations and up to six analysis requests. Generation credits depend on the model; requests are not equivalent to credits.
+
+The workflow is development-only, bound to the loopback interface, same-origin protected, single-flight, and limited to three attempts per UTC day. Journals live in ignored `.visual-evals/` files. An unresolved accepted job retains its lock and task IDs for reconciliation. Production execution is disabled even if the opt-in flag is set. See [the smoke workflow](./docs/local-smoke.md).
 
 ## Validation
 

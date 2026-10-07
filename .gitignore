@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.visual-evals/
 /out/
 
 # production

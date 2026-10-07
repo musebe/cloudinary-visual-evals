@@ -11,7 +11,6 @@ import { CldImage } from "next-cloudinary";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -45,10 +44,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { WorkbenchData } from "@/lib/evaluations/workbench";
+import { SmokeExperiment } from "@/components/smoke-experiment";
 
 interface EvaluationWorkbenchProps {
   cloudinaryConfigured: boolean;
   data: WorkbenchData;
+  localSmokeEnabled: boolean;
 }
 
 interface ReadinessRowProps {
@@ -97,6 +98,7 @@ function AttributeList({ items }: { items: string[] }) {
 export function EvaluationWorkbench({
   cloudinaryConfigured,
   data,
+  localSmokeEnabled,
 }: EvaluationWorkbenchProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -141,9 +143,7 @@ export function EvaluationWorkbench({
     ...(!selectedCase.referenceReady
       ? ["The selected product reference is not bound."]
       : []),
-    "Image Generation access has not been verified.",
-    "AI Vision and Image Quality Analysis access has not been verified.",
-    "The experiment runner is not enabled yet.",
+    ...(!localSmokeEnabled ? ["Set CLOUDINARY_ENABLE_LOCAL_SMOKE=true and restart pnpm dev to enable the local smoke test."] : []),
   ];
 
   return (
@@ -298,6 +298,7 @@ export function EvaluationWorkbench({
                     height={selectedCase.referencePreview.height}
                     sizes="(max-width: 640px) calc(100vw - 80px), 320px"
                     crop="fit"
+                    loading="eager"
                     alt={`Synthetic reference illustration of ${selectedCase.productName}, labeled ${selectedCase.expectedText.join(", ")}`}
                     className="aspect-square w-full max-w-80 rounded-lg border object-contain"
                   />
@@ -421,34 +422,28 @@ export function EvaluationWorkbench({
                 ready={selectedCase.referenceReady}
               />
               <Separator />
-              <ReadinessRow label="Generation add-on" detail="Not verified" />
+              <ReadinessRow label="Generation add-on" detail="Checked by run" />
               <Separator />
-              <ReadinessRow label="Analysis add-ons" detail="Not verified" />
+              <ReadinessRow label="Analysis add-ons" detail="Checked by run" />
               <Separator />
-              <ReadinessRow label="Experiment runner" detail="Not enabled" />
+              <ReadinessRow label="Experiment runner" detail={localSmokeEnabled ? "Local smoke" : "Disabled"} ready={localSmokeEnabled} />
             </CardContent>
           </Card>
 
-          <Alert>
+          {!localSmokeEnabled ? <Alert>
             <LockKeyholeIcon aria-hidden="true" />
             <AlertTitle>Smoke run locked</AlertTitle>
             <AlertDescription>
               Case inspection is ready. Live generation remains locked so an
               incomplete setup cannot spend quota or create misleading results.
             </AlertDescription>
-          </Alert>
+          </Alert> : null}
 
-          <Card>
+          {blockers.length > 0 ? <Card>
             <CardHeader>
-              <CardTitle>Selected smoke case</CardTitle>
-              <CardDescription>
-                {selectedCase.productName} · {selectedCase.promptFamilyLabel}
-              </CardDescription>
+              <CardTitle>Setup to complete</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <Button className="min-h-11 w-full" disabled>
-                Run one-case smoke test
-              </Button>
+            <CardContent>
               <ul className="flex flex-col gap-2 text-xs leading-5 text-muted-foreground">
                 {blockers.map((blocker) => (
                   <li
@@ -461,9 +456,10 @@ export function EvaluationWorkbench({
                 ))}
               </ul>
             </CardContent>
-          </Card>
+          </Card> : null}
         </aside>
       </div>
+      <SmokeExperiment caseId={selectedCase.id} enabled={localSmokeEnabled && cloudinaryConfigured && selectedCase.referenceReady} />
     </section>
   );
 }

@@ -1,6 +1,6 @@
 # Evaluation dataset
 
-`product-images-v1` is the input evidence for the first visual-regression benchmark. All ten reference assets are uploaded, verified through authenticated Cloudinary readback, and bound to their logical keys. The dataset remains marked `draft` while reference review and live evaluation are pending.
+`product-images-v1` is the input evidence for the first visual-regression benchmark. All ten reference assets are uploaded, verified through authenticated Cloudinary readback, and bound to their logical keys. A local smoke case has completed live evaluation. The dataset remains marked `draft` while human calibration and the full benchmark are pending.
 
 ## Why the labels come first
 

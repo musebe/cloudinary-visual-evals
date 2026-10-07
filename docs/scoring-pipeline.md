@@ -10,7 +10,7 @@ The Analyze API is currently a Public Beta. This checkpoint uses:
 - `ai_vision_moderation` for five fixed rejection questions. It also requires Cloudinary AI Vision.
 - `image_quality` for an overall image-quality score and confidence. It requires Cloudinary AI Content Analysis.
 
-Valid Cloudinary credentials do not prove that these add-ons or sufficient quota are available. Live analysis remains disabled until access is confirmed in the selected product environment.
+Valid Cloudinary credentials do not prove that these add-ons or sufficient quota are available. The local smoke workflow has now verified successful calls to all three endpoints in the current product environment. Confirm access and quota again before using another environment.
 
 ## Evidence flow
 
@@ -50,7 +50,7 @@ The current thresholds are policy hypotheses for the demo. They have not yet bee
 | Technical quality | Cloudinary IQA score/confidence plus exact dimensions and format | Separate crop-safety, blur, noise, or composition metrics |
 | Safety | Five fixed rejection questions; any `yes` fails and `unknown` reviews | General safety, compliance, or coverage beyond those questions |
 
-Checkpoint 5 returns records in memory. Persistence, experiment aggregation, baseline-versus-candidate deltas, retries, quota enforcement, human overrides, and evidence UI belong to later checkpoints.
+Checkpoint 5 initially returned records in memory. Later checkpoints add experiment aggregation, bounded poll retries, local recovery journals, quota-consent controls, and an evidence UI. Human overrides, shared persistence, and production-scale quota enforcement remain pending.
 
 Official references:
 

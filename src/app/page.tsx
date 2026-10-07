@@ -9,6 +9,7 @@ import { productImagesV1 } from "@/data/product-images-v1";
 import { referenceAssets } from "@/data/reference-assets";
 import { inspectCloudinaryEnvironment } from "@/lib/config/cloudinary-env";
 import { buildEvaluationWorkbenchData } from "@/lib/evaluations/workbench";
+import { localSmokeEnabled } from "@/lib/evaluations/local-smoke";
 
 const workbenchData = buildEvaluationWorkbenchData(
   productImagesV1,
@@ -24,6 +25,7 @@ async function EvaluationWorkbenchRuntime() {
         inspectCloudinaryEnvironment(process.env).configured
       }
       data={workbenchData}
+      localSmokeEnabled={localSmokeEnabled(process.env)}
     />
   );
 }
@@ -67,12 +69,12 @@ export default function Home() {
           AI image regression testing
         </Badge>
         <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-          Inspect the test before you run the model.
+          Compare generated product images.
         </h1>
         <p className="text-pretty text-base leading-7 text-muted-foreground">
-          Review the fixed prompt, product labels, expected text, and pass
-          criteria for every case. Live Cloudinary generation unlocks only when
-          its evidence inputs are complete.
+          Choose a fixed product-image case, run a baseline and candidate, and
+          inspect their Cloudinary-backed evidence. Restore the last local
+          result to explore the comparison without generating again.
         </p>
       </section>
 

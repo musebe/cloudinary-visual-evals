@@ -62,11 +62,13 @@ These assets use public `upload` delivery so the workbench can show them without
 
 ## Image Generation access
 
-Before running live experiments, open **Marketplace → Image Generation**, register the add-on, and confirm the quota and edit-model availability for this product environment. The asynchronous adapter is implemented, but no live generation request has been verified yet. Reference upload and Admin API readback do not establish Image Generation entitlement. See the [Image Generation add-on guide](https://cloudinary.com/documentation/image_generation_addon).
+Before running live experiments, open **Marketplace → Image Generation**, register the add-on, and confirm the quota and edit-model availability for your product environment. The current environment successfully generated baseline and candidate images with `flux-2-klein-9b-edit` in a controlled smoke test. Reference upload and Admin API readback alone do not establish Image Generation entitlement. See the [Image Generation add-on guide](https://cloudinary.com/documentation/image_generation_addon).
 
 ## Analysis access
 
 The scoring pipeline uses the Public Beta Analyze API. Register **Cloudinary AI Vision** for general and moderation analysis, and **Cloudinary AI Content Analysis** for image-quality analysis. Confirm the quota for both add-ons before running a live smoke case. A successful credential check or reference readback confirms authentication only; it does not confirm add-on entitlement. See the [Analyze API guide](https://cloudinary.com/documentation/analyze_api_guide).
+
+The controlled smoke test successfully called AI Vision General, AI Vision Moderation, and Image Quality Analysis for both generated images. This verifies current access to those endpoints, not scoring accuracy or availability for every future request. Enable the [local smoke workflow](./local-smoke.md) only after checking your quota.
 
 ## References
 

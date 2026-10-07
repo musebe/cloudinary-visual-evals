@@ -21,12 +21,13 @@ This file records implementation decisions and verification evidence while the d
 - Evaluation workbench slice: passed ESLint, TypeScript, 59 tests across 12 files, a Next.js production build, and query-addressable case smoke checks on October 7, 2026.
 - Repeatable experiment runner: passed ESLint, TypeScript, 68 tests across 15 files, and a Next.js production build on October 7, 2026.
 - Reference and runner-safety checkpoint: passed ESLint, TypeScript, 88 tests across 16 files, and a Next.js production build on October 8, 2026. The reference provisioning rerun reused all ten assets; selected-reference authenticated preflight passed. A browser check at 390 px verified a loaded EVAL-10 preview, the Geist font, and no horizontal overflow.
+- Local smoke checkpoint: passed ESLint, TypeScript, 110 tests across 19 files, and a Next.js production build on October 8, 2026. A 390 px browser check loaded reference and generated previews without document overflow. Production returned HTTP 403 for both execution and saved-result routes while the local opt-in flag remained set; the main page returned HTTP 200.
 - `GET /api/health`: verified as an uncached dynamic route; it returned the expected HTTP 503 and a secret-free JSON body while local credentials were absent.
 - Authenticated Cloudinary ping: connected successfully to the configured product environment on October 7, 2026; the command exposed no credentials.
 - Domain tests: begin with the versioned dataset and evaluation-policy checkpoint.
-- Reference asset checkpoint: all ten public PNG references are bound from authenticated Admin API readback; repeatable byte fingerprints are recorded in `contentSha256`. Live generation has not been run.
-- Live Cloudinary generation: pending Image Generation and analysis add-on confirmation and a guarded run entrypoint, not pending reference provisioning or local credentials.
-- Baseline benchmark: runner implemented; live execution and measured results remain pending.
+- Reference asset checkpoint: all ten public PNG references are bound from authenticated Admin API readback; repeatable byte fingerprints are recorded in `contentSha256`. Live generation was still pending at that checkpoint.
+- Live Cloudinary generation: one controlled local baseline/candidate pair verified with managed-asset readback and all three analysis services on October 8, 2026 (Nairobi).
+- Full baseline benchmark: pending; smoke results are not the 50-case benchmark.
 
 ## Cloudinary server foundation
 
@@ -57,7 +58,7 @@ This file records implementation decisions and verification evidence while the d
 - Added normalized provenance for dataset, prompt, reference snapshot, requested configuration, resolved model, managed output, quota, notices, and timing.
 - Added an authenticated Admin API readback that requires the persisted asset identity and version to match the generation provenance.
 - Never serializes the Cloudinary API key, secret, raw error message, or response body.
-- At this checkpoint, live generation was pending Image Generation add-on access and ten real reference assets; no fake identities or benchmark outputs were added. Reference provisioning is now complete, but live generation remains unverified.
+- At this checkpoint, live generation was pending Image Generation add-on access and ten real reference assets; no fake identities or benchmark outputs were added. The later reference and local-smoke checkpoints complete those prerequisites for the current environment.
 
 ## Structured visual scoring
 
@@ -69,7 +70,7 @@ This file records implementation decisions and verification evidence while the d
 - Changed aggregate scoring so any missing or incomplete required dimension produces a null aggregate instead of a misleading partial average.
 - Sanitized provider errors while preserving safe request, status, category, retry, and outcome metadata for later audit and retry logic.
 - Added 22 scoring and transport tests covering pass, fail, review, stale provenance, source mismatches, malformed structured output, invented labels, delivery mismatches, low confidence, safety results, rate limits, timeouts, and response-stream failures.
-- Tests use fixtures and mocked Analyze responses. Live Analyze access, latency, quota behavior, costs, scoring accuracy, and false-positive or false-negative rates have not yet been verified.
+- This checkpoint used fixtures and mocked Analyze responses. The later smoke checkpoint verifies endpoint access and records one run's latency and generation quota. Scoring accuracy, calibrated costs, and false-positive or false-negative rates remain unmeasured.
 - Reference fidelity currently means comparison with precommitted textual identity labels. Dedicated reference-image comparison and OCR remain possible later extensions, not current claims.
 
 ## Evaluation workbench preflight
@@ -101,4 +102,16 @@ This file records implementation decisions and verification evidence while the d
 - Added server-side reference preflight by immutable asset ID before generation. It validates dataset and reference context, identity, version, media properties, versioned HTTPS delivery, byte count, and content SHA-256 fingerprint before paid requests can start.
 - Added versioned Cloudinary reference previews to the case workbench and updated coverage to ten of ten. The preview is labeled as a fixed synthetic reference and includes descriptive alt text.
 - Public PNG delivery is deliberate for this non-confidential fictional dataset. The script requests `X-Robots-Tag: noindex, nofollow`; that header does not make the media private.
-- Reference provisioning does not confirm Image Generation, AI Vision, or Image Quality Analysis entitlement. The smoke-run control remains locked, the dataset remains `draft`, and no live generation or analysis scores have been recorded.
+- Reference provisioning alone does not confirm Image Generation, AI Vision, or Image Quality Analysis entitlement. At this checkpoint the control remained locked. The later local-smoke checkpoint verifies endpoint access; the dataset still remains `draft` pending human calibration.
+
+## Guarded local smoke workflow
+
+- Added a development-only, same-origin loopback endpoint for one committed case with fixed server configurations, explicit quota consent, an atomic single-flight lock, and a three-attempt UTC daily limit.
+- Bound `pnpm dev` to `127.0.0.1` and added an opt-in flag. Production execution is always denied.
+- Added NDJSON progress, responsive baseline/candidate previews, separate dimension decisions, JSON export, and a no-generation **Load last result** action.
+- Stored plans, submission intents, accepted task responses, and final records in ignored local `.visual-evals/` journals. Uncertain jobs retain their lock; progress transport errors do not change provider outcomes.
+- Added route and filesystem regression tests for production and cross-origin denial, quota consent, unknown cases, storage errors, exclusive leases, atomic journal replacement, saved-result restoration, preflight release, and the UTC daily limit. Daily counting happens under the lease to prevent concurrent quota checks from racing.
+- Controlled live case: `cobalt-trail-bottle-studio-packshot`, `flux-2-klein-9b-edit`, two 1024 × 1024 PNG outputs, 26.1 seconds runner duration, both policy decisions `pass`. Technical-quality scores were 87.77 baseline and 84.51 candidate. Cloudinary reported three generation credits per variant. All six analysis calls returned complete evidence.
+- A later local orange-carry-on multi-angle record had a `pass` baseline and `review` candidate because AI Vision structured evidence failed validation. Its candidate aggregate remained null.
+- A third bottle-label close-up recorded `fail` for both variants on missing identity evidence and candidate identity drift. These findings remain subject to human calibration. Subsequent requests returned HTTP 409 under the three-run cap.
+- These are smoke records, not benchmark or human-calibrated quality claims. Shared persistence, durable execution, human review, and the full benchmark remain pending.

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
     "cloudinary:references": "node scripts/provision-reference-assets.mjs",
     "cloudinary:verify": "node scripts/verify-cloudinary.mjs",

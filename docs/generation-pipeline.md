@@ -4,7 +4,7 @@ Checkpoint 4 implements the server-side boundary for repeatable baseline and can
 
 ## Why the pipeline is asynchronous
 
-Cloudinary Image Generation can run synchronously or asynchronously. This project requests asynchronous `image_to_image` jobs so a Next.js request does not need to stay open while a model generates an image. Cloudinary returns a task ID, which the implemented experiment runner retains and polls. Durable run persistence and a browser-facing run endpoint are not enabled yet.
+Cloudinary Image Generation can run synchronously or asynchronously. This project requests asynchronous `image_to_image` jobs and retains the accepted task ID for polling and recovery. The domain adapter separates submission and polling. The local smoke endpoint streams while the runner polls, so its HTTP request still remains open; production durable execution is not implemented.
 
 The adapter deliberately separates two operations:
 
@@ -70,7 +70,7 @@ After normalization, the server reads the completed image back through the Cloud
 - The public app has no unbounded generation endpoint.
 - The full benchmark would require 100 generations: 50 baseline plus 50 candidate. The runner will start with a smoke subset and stop when quota evidence says it should not continue.
 
-Reference provisioning and authenticated readback are complete for the configured environment. Before live generation, confirm Cloudinary Image Generation and analysis add-on access and quotas, review the synthetic reference inputs, and enable the guarded run workflow. No live generation score or benchmark result is claimed yet.
+Reference provisioning and authenticated readback are complete for the configured environment. A [guarded local smoke run](./local-smoke.md) has verified real generation and analysis. Before running in another environment, confirm add-on access and quotas and review the synthetic reference inputs. No full benchmark result is claimed.
 
 Official references:
 
